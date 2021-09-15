@@ -1,0 +1,19 @@
+name: Pull request closed with or without merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  reject:
+    if: github.event.pull_request.merged != 'true'
+    runs-on: ubuntu-latest
+    # PR rejected - notify
+
+  merged:
+    if: github.event.pull_request.merged == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Tag release, 'learning-start'
+

@@ -1,0 +1,37 @@
+name: Pull request create or resync
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    # Copy tags to the latest commit
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Need validation
+      - run: |
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+      - name: Get changed files
+        id: file_changes
+        run: |
+          export DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
+          echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
+          echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: Run pre-commit
+        uses: pre-commit/action@v2.0.0
+        env:
+          SKIP: no-commit-to-branch
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          extra_args: --color=always --show-diff-on-failure --files ${{ steps.file_changes.outputs.files }}
+        
+      # PR comments - pre-commit output
+
