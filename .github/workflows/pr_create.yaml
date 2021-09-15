@@ -2,11 +2,13 @@ name: Pull request create or resync
 
 on:
   pull_request:
+    branches:
+      - main
     types: [opened, synchronize, reopened]
 
 jobs:
-  tag:
-    runs-on: ubuntu-latest
+  #tag:
+    #runs-on: ubuntu-latest
     # Copy tags to the latest commit
 
   lint:
