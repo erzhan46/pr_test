@@ -32,9 +32,8 @@ jobs:
           echo "$DIFF"
           echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
       - run: |
-          gh pr diff
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          export MAIN_SHA=$(git rev-parse origin/${{ github.base_ref }})
+          echo $MAIN_SHA
       - uses: actions/setup-python@v2
         with:
           python-version: "3.9"
