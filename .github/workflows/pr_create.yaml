@@ -20,6 +20,9 @@ jobs:
           echo $BASE_SHA
           export HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
           echo $HEAD_SHA
+          echo "git rev"
+          git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA}
+          echo "set output"
           echo "::set-output name=commits::$(git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA})"
       - name: Get tags
         id: get_tags
