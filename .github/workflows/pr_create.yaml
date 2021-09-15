@@ -22,6 +22,7 @@ jobs:
           echo "Head_ref: ${{ github.head_ref }}"
           echo "Ref: ${{ github.ref }}"
           echo "Ref: ${{ github.ref }}"
+          git log
       - run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
       - name: Get changed files
