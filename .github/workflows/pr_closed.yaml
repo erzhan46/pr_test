@@ -10,6 +10,7 @@ jobs:
   reject:
     if: github.event.pull_request.merged != 'true'
     runs-on: ubuntu-latest
+    steps:
     # PR rejected - notify
       - run: |
           echo "PR rejected"
