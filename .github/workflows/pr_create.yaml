@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-        git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*:refs/tags/*
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*:refs/tags/*
       - run: |
           export BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})
           echo $BASE_SHA
