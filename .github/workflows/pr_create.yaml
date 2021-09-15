@@ -32,13 +32,14 @@ jobs:
           echo "$DIFF"
           echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
       - run: |
+          echo "GIT LOGt"
           git log
-          echo "1"
+          echo "GIT LOG origin/main"
           git log origin/main
-          echo "2"
+          echo "GIT LOG SHA ${{ github.sha }}"
           git log ${{ github.sha }}
-          echo "3"
-          git log ${{ github.ref }}
+          echo "GIT LOG REF ${{ github.ref }}"
+          git log origin ${{ github.ref }}
       - uses: actions/setup-python@v2
         with:
           python-version: "3.9"
