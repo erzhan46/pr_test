@@ -2,6 +2,8 @@ name: Pull request closed with or without merge
 
 on:
   pull_request:
+    branches:
+      - main
     types: [closed]
 
 jobs:
@@ -9,11 +11,15 @@ jobs:
     if: github.event.pull_request.merged != 'true'
     runs-on: ubuntu-latest
     # PR rejected - notify
+      - run: |
+          echo "PR rejected"
 
   merged:
     if: github.event.pull_request.merged == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: |
+          echo "PR merged"
       # Tag release, 'learning-start'
 

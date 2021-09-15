@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # Need validation
-      - run: |
-          cat .github/workflows/pr_create.yaml
       - run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
       - name: Get changed files
@@ -25,12 +22,8 @@ jobs:
         run: |
           export DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
           echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
+          echo "$DIFF"
           echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
-      - run: |
-          echo ${{ steps.file_changes.outputs.files }}
-          cat ${{ steps.file_changes.outputs.files }}
-          echo "Direct"
-          cat .github/workflows/pr_create.yaml
       - uses: actions/setup-python@v2
         with:
           python-version: "3.9"
@@ -42,6 +35,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           extra_args: --color=always --show-diff-on-failure --files ${{ steps.file_changes.outputs.files }}
         
-      # PR comments - pre-commit output
-
 
