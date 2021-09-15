@@ -34,6 +34,7 @@ jobs:
       - run: |
           export MAIN_SHA=$(git rev-parse origin/${{ github.base_ref }})
           echo $MAIN_SHA
+          git rev-list --ancestry-path "${{ github.sha }}^..$MAIN_SHA"
       - uses: actions/setup-python@v2
         with:
           python-version: "3.9"
