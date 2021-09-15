@@ -16,14 +16,15 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
-          export BASE_SHA=$(git rev-parse origin/${{ github.base_ref }}^2)
+          BASE_SHA=$(git rev-parse origin/${{ github.base_ref }}^2)
           echo $BASE_SHA
-          export HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
+          HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
           echo $HEAD_SHA
-          echo "git rev"
-          git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA}
-          echo "set output"
-          echo "::set-output name=commits::$(git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA})"
+          COMMIT_LIST=$(git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA})
+          COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
+          COMMIT_LIST="${COMMIT_LIST//$'\n'/'%0A'}"
+          COMMIT_LIST="${COMMIT_LIST//$'\r'/'%0D'}"
+          echo "::set-output name=commits::${COMMIT_LIST}"
       - name: Get tags
         id: get_tags
         run: |
@@ -39,7 +40,7 @@ jobs:
       - name: Get changed files
         id: file_changes
         run: |
-          export DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
+          DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
           echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
           echo "$DIFF"
           echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
