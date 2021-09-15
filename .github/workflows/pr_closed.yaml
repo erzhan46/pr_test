@@ -7,6 +7,12 @@ on:
     types: [closed]
 
 jobs:
+  tst:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Merged: ${{ github.event.pull_request.merged }}"
+
   reject:
     if: github.event.pull_request.merged != 'true'
     runs-on: ubuntu-latest
