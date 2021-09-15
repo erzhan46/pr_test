@@ -12,10 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+        git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*:refs/tags/*
       - run: |
-          export BASE_SHA=$(git rev-parse origin/${{ github.base_ref }}^2)
+          export BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})
           echo $BASE_SHA
+          git rev-parse "${BASE_SHA}^@"
           export HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
           echo $HEAD_SHA
           git rev-list --ancestry-path "${BASE_SHA}^..${HEAD_SHA}"
