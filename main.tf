@@ -1,4 +1,8 @@
-module "consul" {
-  source = "hashicorp/consul/aws"
-  version = "0.1.1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 1.0.4"
+    }
+  }
 }
