@@ -32,6 +32,14 @@ jobs:
           do
             git tag --contains ${COMMIT}
           done
+      - run: |
+          BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})
+          echo "git tag"
+          git tag
+          echo "git tag contains ${BASE_SHA}"
+          git tag --contains ${BASE_SHA}
+          echo "git tag merged ${BASE_SHA}"
+          git tag --merged ${BASE_SHA}
 
 
   lint:
