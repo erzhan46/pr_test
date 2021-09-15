@@ -2,11 +2,13 @@ name: Pull request create or resync
 
 on:
   pull_request:
+    branches:
+      - main
     types: [opened, synchronize, reopened]
 
 jobs:
-  tag:
-    runs-on: ubuntu-latest
+  #tag:
+    #runs-on: ubuntu-latest
     # Copy tags to the latest commit
 
   lint:
@@ -34,4 +36,5 @@ jobs:
           extra_args: --color=always --show-diff-on-failure --files ${{ steps.file_changes.outputs.files }}
         
       # PR comments - pre-commit output
+
 
