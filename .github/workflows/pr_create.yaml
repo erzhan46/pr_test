@@ -7,21 +7,24 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  #tag:
-    #runs-on: ubuntu-latest
-    # Copy tags to the latest commit
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+      - run: |
+          export BASE_SHA=$(git rev-parse origin/${{ github.base_ref }}^2)
+          echo $BASE_SHA
+          export HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
+          echo $HEAD_SHA
+          git rev-list --ancestry-path "${BASE_SHA}^..${HEAD_SHA}"
+
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          echo "SHA: ${{ github.sha }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "Base_ref: ${{ github.base_ref }}"
-          echo "Head_ref: ${{ github.head_ref }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Ref: ${{ github.ref }}"
       - run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
       - name: Get changed files
@@ -31,12 +34,6 @@ jobs:
           echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
           echo "$DIFF"
           echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
-      - run: |
-          export BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})
-          echo $BASE_SHA
-          export HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
-          echo $HEAD_SHA
-          git rev-list --ancestry-path "${BASE_SHA}^..${HEAD_SHA}"
       - uses: actions/setup-python@v2
         with:
           python-version: "3.9"
@@ -48,7 +45,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           extra_args: --color=always --show-diff-on-failure --files ${{ steps.file_changes.outputs.files }}
         
-  one:
+  context-debug:
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
