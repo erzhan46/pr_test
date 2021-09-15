@@ -30,16 +30,8 @@ jobs:
         run: |
           echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT
           do
-            git tag --contains ${COMMIT}
+            git describe --tags --exact-match  ${COMMIT} 2>/dev/null
           done
-      - run: |
-          BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})
-          echo "git tag"
-          git tag
-          echo "git tag contains ${BASE_SHA}"
-          git tag --contains ${BASE_SHA}
-          echo "git tag merged ${BASE_SHA}"
-          git tag --merged ${BASE_SHA}
 
 
   lint:
