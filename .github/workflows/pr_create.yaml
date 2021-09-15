@@ -16,6 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
+          git tag
+      - run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
       - name: Get changed files
         id: file_changes
