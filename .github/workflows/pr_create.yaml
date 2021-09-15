@@ -31,15 +31,8 @@ jobs:
           echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
           echo "$DIFF"
           echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
-      - run: |
-          echo "GIT LOGt"
-          git log
-          echo "GIT LOG origin/main"
-          git log origin/main
-          echo "GIT LOG SHA ${{ github.sha }}"
-          git log ${{ github.sha }}
-          echo "GIT LOG REF ${{ github.ref }}"
-          git log origin ${{ github.ref }}
+      - run:
+          gh pr diff
       - uses: actions/setup-python@v2
         with:
           python-version: "3.9"
