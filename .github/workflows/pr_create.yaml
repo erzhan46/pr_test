@@ -62,6 +62,10 @@ jobs:
             echo "Pull request should contain at least one commit with the version tag if code files are changed"
             echo "Files changed: ${{ steps.code_changed.outputs.files }}"
             exit 1
+          else
+            echo "Code version tag presense check passed"
+            echo "Files changed: ${{ steps.code_changed.outputs.files }}"
+            echo "Code version: ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
           fi
 
 
