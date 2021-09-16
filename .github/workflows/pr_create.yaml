@@ -28,7 +28,8 @@ jobs:
       - name: Get code version tag in scope of PR (latest/if any)
         id: get_latest_code_tag
         run: |
-          TAGS=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do; git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 3>/dev/null || true; done)
+          COMMIT_LIST="${{ steps.get_commits.outputs.commits }}"
+          TAGS=$(echo ${COMMIT_LIST} | while read COMMIT; do; git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 3>/dev/null || true; done)
           echo ${TAGS}
       - run: |
           echo "last tag"
