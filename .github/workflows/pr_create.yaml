@@ -32,6 +32,11 @@ jobs:
           do
             git describe --tags --exact-match  ${COMMIT} 2>/dev/null || true
           done
+      - run: |
+          echo "last tag"
+          git describe --tags  $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
+          echo "previous tag"
+          git describe --tags  $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1 --before=$(git show -s --format=%ct origin/main))
 
 
   lint:
