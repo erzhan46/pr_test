@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 250
+          fetch-depth: 251
       - run: |
           git fetch --prune --tags origin 
       - name: Get commits in PR
