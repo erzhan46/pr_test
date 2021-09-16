@@ -30,7 +30,7 @@ jobs:
           echo "2"
           git rev-list origin/${{ github.base_ref }}
           echo "3"
-          git rev-list --merges origin/${{ github.base_ref }}
+          git rev-list origin/${{ github.head_ref }}
           echo "4"
           git rev-list --merges --max-count=2 origin/${{ github.base_ref }}
           ARR=($(git rev-list --merges  --max-count=2 origin/main))
