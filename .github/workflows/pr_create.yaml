@@ -29,8 +29,10 @@ jobs:
         id: get_latest_code_tag
         run: |
           TAGS=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 2>/dev/null || true; done)
-          echo ${TAGS}
+          echo "::set-output name=latest_code_tag::${TAGS}"
       - run: |
+          echo "latest code tag"
+          echo ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}
           echo "last tag"
           git describe --tags  $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
           echo "last release tag"
