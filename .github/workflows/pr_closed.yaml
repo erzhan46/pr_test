@@ -22,17 +22,14 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 250
+      - name: Git config
+        run: |
+          git config --global user.email "infra-pipeline@dh.com"
+          git config --global user.name "Infrastructure Pipeline"
       - run: |
           echo "PR merged"
       - run: |
           git fetch --prune --tags origin
-      - run: |
-          echo "2"
-          git rev-list origin/${{ github.base_ref }}
-          echo "3"
-          git rev-list origin/${{ github.head_ref }}
-          echo "4"
-          git rev-list --merges origin/${{ github.head_ref }}
       - name: Get commits in PR
         id: get_commits
         run: |
@@ -58,7 +55,16 @@ jobs:
       - name: Get changed files
         id: get_changed_files
         run: |
-          DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
+          ARR=($(git rev-list --merges  --max-count=2 origin/main))
+          BASE_SHA=${ARR[1]}
+          echo $BASE_SHA
+          HEAD_SHA=${ARR[0]}
+          echo $HEAD_SHA
+          if [[ -z ${BASE_SHA} ]]; then
+             DIFF=$(git diff --name-only ${HEAD_SHA})
+          else
+            DIFF=$(git diff --name-only ${HEAD_SHA} ${BASE_SHA})
+          fi
           echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
           echo "$DIFF"
           DIFF="${DIFF//'%'/'%25'}"
@@ -96,17 +102,19 @@ jobs:
       - name: Tag Code changes
         id: tag_code_changes
         run: |
-          if [[ -n "${{ steps.files_scope.outputs.code_files }}" && -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
-            echo "Pull request should contain at least one commit with the version tag if code files are changed"
-            echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
-            exit 1
-          else
-            RELEASE_VERSION="${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
-            RELEASE_VERSION="release-${RELEASE_VERSION#v}.0"
-            echo "Merge commit contains code and will be tagged with: ${RELEASE_VERSION}"
-            git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
-            git tag -a "code" -m "Deployment contain code changes" ${{ github.sha }}
-            echo "::set-output name=release_version::${RELEASE_VERSION}"
+          if [[ -n "${{ steps.files_scope.outputs.code_files }}" ]]; then
+            if [[ -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
+              echo "Pull request should contain at least one commit with the version tag if code files are changed"
+              echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
+              exit 1
+            else
+              RELEASE_VERSION="${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
+              RELEASE_VERSION="release-${RELEASE_VERSION#v}.0"
+              echo "Merge commit contains code and will be tagged with: ${RELEASE_VERSION}"
+              git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
+              git tag -a "code" -m "Deployment contain code changes" ${{ github.sha }}
+              echo "::set-output name=release_version::${RELEASE_VERSION}"
+            fi
           fi
       - name: Tag configuration changes
         id: tag_config_changes
