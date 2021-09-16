@@ -27,8 +27,6 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
-          echo "1"
-          git rev-list
           echo "2"
           git rev-list origin/${{ github.base_ref }}
           echo "3"
