@@ -43,7 +43,7 @@ jobs:
       - name: Code changed
         id: code_changed
         run: |
-          CODE_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/*"; done)
+          CODE_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/*" || true; done)
           echo ${CODE_FILES}
       - run: |
           echo "latest code tag in current PR"
