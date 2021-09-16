@@ -24,15 +24,16 @@ jobs:
           echo "PR merged"
       - run: |
           git fetch --prune --tags origin
-      - name: Get commits in PR
-        id: get_commits
-        run: |
+      - run: |
           echo "2"
           git rev-list origin/${{ github.base_ref }}
           echo "3"
           git rev-list origin/${{ github.head_ref }}
           echo "4"
-          git rev-list --merges --max-count=2 origin/${{ github.base_ref }}
+          git rev-list --merges origin/${{ github.head_ref }}
+      - name: Get commits in PR
+        id: get_commits
+        run: |
           ARR=($(git rev-list --merges  --max-count=2 origin/main))
           BASE_SHA=${ARR[1]}
           echo $BASE_SHA
