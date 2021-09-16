@@ -40,15 +40,27 @@ jobs:
           DIFF="${DIFF//$'\n'/'%0A'}"
           DIFF="${DIFF//$'\r'/'%0D'}"
           echo "::set-output name=files::${DIFF}"
-      - name: Code changed
-        id: code_changed
+      - name: Files scope
+        id: files_scope
         run: |
           CODE_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/*" || true; done)
-          echo ${CODE_FILES}
+          echo "Code files:${CODE_FILES}"
           CODE_FILES="${CODE_FILES//'%'/'%25'}"
           CODE_FILES="${CODE_FILES//$'\n'/'%0A'}"
           CODE_FILES="${CODE_FILES//$'\r'/'%0D'}"
-          echo "::set-output name=files::${CODE_FILES}"
+          echo "::set-output name=code_files::${CODE_FILES}"
+          CONF_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^config\/*" || true; done)
+          echo "Configuration files:${CONF_FILES}"
+          CONF_FILES="${CONF_FILES//'%'/'%25'}"
+          CONF_FILES="${CONF_FILES//$'\n'/'%0A'}"
+          CONF_FILES="${CONF_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=conf_files::${CONF_FILES}"
+          WORKFLOW_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^\.github\/workflows\/*" || true; done)
+          echo "Workflow files:${WORKFLOW_FILES}"
+          WORKFLOW_FILES="${WORKFLOW_FILES//'%'/'%25'}"
+          WORKFLOW_FILES="${WORKFLOW_FILES//$'\n'/'%0A'}"
+          WORKFLOW_FILES="${WORKFLOW_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=workflow_files::${WORKFLOW_FILES}"
       - run: |
           echo "latest code tag in current PR"
           echo ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}
@@ -58,14 +70,28 @@ jobs:
           git describe --tags  $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
       - name: Check code version tag presense
         run: |
-          if [[ -n "${{ steps.code_changed.outputs.files }}" && -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
+          if [[ -n "${{ steps.files_scope.outputs.code_files }}" && -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
             echo "Pull request should contain at least one commit with the version tag if code files are changed"
-            echo "Files changed: ${{ steps.code_changed.outputs.files }}"
+            echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
             exit 1
           else
             echo "Code version tag presense check passed"
-            echo "Files changed: ${{ steps.code_changed.outputs.files }}"
+            echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
             echo "Code version: ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
+          fi
+      - name: Check that github workflow changes are separate from code/configuration
+        run: |
+          if [[ ( -n "${{ steps.files_scope.outputs.code_files }}" || -n "${{ steps.files_scope.outputs.conf_files }}" ) && -n "${{ steps.files_scope.outputs.workflow_files }}" ]]; then
+            echo "Pull request should not contain workflow modifications together with code/configuration modifications"
+            echo "Code files changed: ${{ steps.files_scope.outputs.code_files }}"
+            echo "Configuration files changed: ${{ steps.files_scope.outputs.conf_files }}"
+            echo "Workflow files changed: ${{ steps.files_scope.outputs.workflow_files }}"
+            exit 1
+          else
+            echo "Workflow separation check passed"
+            echo "Code files changed: ${{ steps.files_scope.outputs.code_files }}"
+            echo "Configuration files changed: ${{ steps.files_scope.outputs.conf_files }}"
+            echo "Workflow files changed: ${{ steps.files_scope.outputs.workflow_files }}"
           fi
 
 
