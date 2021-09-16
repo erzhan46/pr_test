@@ -27,6 +27,14 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
+          echo "1"
+          git rev-list
+          echo "2"
+          git rev-list origin/${{ github.base_ref }}
+          echo "3"
+          git rev-list --merges origin/${{ github.base_ref }}
+          echo "4"
+          git rev-list --merges --max-count=2 origin/${{ github.base_ref }}
           ARR=($(git rev-list --merges  --max-count=2 origin/main))
           BASE_SHA=${ARR[1]}
           echo $BASE_SHA
