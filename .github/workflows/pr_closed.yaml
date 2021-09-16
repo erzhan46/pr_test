@@ -137,7 +137,7 @@ jobs:
       - name: Tag for promotion start
         id: promotion_start
         run: |
-          git tag -a "learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
+          git tag -a -f "learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
           git push origin "learning-start"
 
 
