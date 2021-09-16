@@ -7,12 +7,6 @@ on:
     types: [closed]
 
 jobs:
-  tst:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "Merged: ${{ github.event.pull_request.merged }}"
-
   reject:
     if: github.event.pull_request.merged != true
     runs-on: ubuntu-latest
@@ -28,11 +22,107 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           echo "PR merged"
-          git tag
+      - run: |
+          git fetch --prune --tags origin
+      - name: Get commits in PR
+        id: get_commits
+        run: |
+          BASE_SHA=$(git rev-parse origin/${{ github.base_ref }}^2)
+          echo $BASE_SHA
+          HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
+          echo $HEAD_SHA
+          COMMIT_LIST=$(git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA})
+          COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
+          COMMIT_LIST="${COMMIT_LIST//$'\n'/'%0A'}"
+          COMMIT_LIST="${COMMIT_LIST//$'\r'/'%0D'}"
+          echo "::set-output name=commits::${COMMIT_LIST}"
+      - name: Get code version tag in scope of PR (latest/if any)
+        id: get_latest_code_tag
+        run: |
+          TAGS=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 2>/dev/null ||   true; done)
+          echo "::set-output name=latest_code_tag::${TAGS}"
+      - name: Get changed files
+        id: get_changed_files
+        run: |
+          DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
+          echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
+          echo "$DIFF"
+          DIFF="${DIFF//'%'/'%25'}"
+          DIFF="${DIFF//$'\n'/'%0A'}"
+          DIFF="${DIFF//$'\r'/'%0D'}"
+          echo "::set-output name=files::${DIFF}"
+      - name: Files scope
+        id: files_scope
+        run: |
+          CODE_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/*" || true; done)
+          echo "Code files:${CODE_FILES}"
+          CODE_FILES="${CODE_FILES//'%'/'%25'}"
+          CODE_FILES="${CODE_FILES//$'\n'/'%0A'}"
+          CODE_FILES="${CODE_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=code_files::${CODE_FILES}"
+          CONF_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^config\/*" || true; done)
+          echo "Configuration files:${CONF_FILES}"
+          CONF_FILES="${CONF_FILES//'%'/'%25'}"
+          CONF_FILES="${CONF_FILES//$'\n'/'%0A'}"
+          CONF_FILES="${CONF_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=conf_files::${CONF_FILES}"
+          WORKFLOW_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^\.github\/workflows\/*" || true; done)
+          echo "Workflow files:${WORKFLOW_FILES}"
+          WORKFLOW_FILES="${WORKFLOW_FILES//'%'/'%25'}"
+          WORKFLOW_FILES="${WORKFLOW_FILES//$'\n'/'%0A'}"
+          WORKFLOW_FILES="${WORKFLOW_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=workflow_files::${WORKFLOW_FILES}"
+      - run: |
+          echo "latest code tag in current PR"
+          echo ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}
+          echo "latest code tag overall"
+          git describe --tags  $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
+          echo "latest release tag overall"
+          git describe --tags  $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
+      - name: Tag Code changes
+        id: tag_code_changes
+        run: |
+          if [[ -n "${{ steps.files_scope.outputs.code_files }}" && -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
+            echo "Pull request should contain at least one commit with the version tag if code files are changed"
+            echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
+            exit 1
+          else
+            RELEASE_VERSION="${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
+            RELEASE_VERSION="release-${RELEASE_VERSION#v}.0"
+            echo "Merge commit contains code and will be tagged with: ${RELEASE_VERSION}"
+            git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
+            git tag -a "code" -m "Deployment contain code changes" ${{ github.sha }}
+            echo "::set-output name=release_version::${RELEASE_VERSION}"
+          fi
+      - name: Tag configuration changes
+        id: tag_config_changes
+        run: |
+          if [[ -n "${{ steps.files_scope.outputs.conf_files }}" ]]; then
+            RELEASE_VERSION="${{ steps.tag_code_changes.outputs.release_version }}"
+            if [[ -z "${RELEASE_VERSION}" ]]; then
+              VERSION=${RELEASE_VERSION%\.[0-9]*}
+              PREV_DEPLOYMENT=${RELEASE_VERSION#release-[0-9]*\.[0-9]*\.[0-9]*\.}
+              DEPLOYMENT=$(expr ${PREV_DEPLOYMENT} + 1)
+              RELEASE_VERSION="${VERSION}.${DEPLOYMENT}"
+              git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
+            fi
+            echo "Merge commit contains configuration and will be tagged with: ${RELEASE_VERSION}"
+            git tag -a "config" -m "Deployment contain configuration changes" ${{ github.sha }}
+            echo "::set-output name=release_version::${RELEASE_VERSION}"
+          fi
+        # Need logic to check for environment targeted deployment
+        # Logic for manual deployment tag move to merge? 
+      - name: Tag for promotion start
+        id: promotion_start
+        run: |
+          git tag -a "learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
+
+
+
       # Tag release, 'learning-start'
       # Test message
 
-  two:
+  context-debug:
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
