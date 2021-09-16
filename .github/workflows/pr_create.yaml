@@ -30,12 +30,27 @@ jobs:
         run: |
           TAGS=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 2>/dev/null || true; done)
           echo "::set-output name=latest_code_tag::${TAGS}"
+      - name: Get changed files
+        id: get_changed_files
+        run: |
+          DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
+          echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
+          echo "$DIFF"
+          DIFF="${DIFF//'%'/'%25'}"
+          DIFF="${DIFF//$'\n'/'%0A'}"
+          DIFF="${DIFF//$'\r'/'%0D'}"
+          echo "::set-output name=files::${DIFF}"
+      - name: Code changed
+        id: code_changed
+        run: |
+          CODE_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo${FILE}|grep "^code\/*"; done)
+          echo ${CODE_FILES}
       - run: |
-          echo "latest code tag"
+          echo "latest code tag in current PR"
           echo ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}
-          echo "last tag"
+          echo "latest code tag overall"
           git describe --tags  $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
-          echo "last release tag"
+          echo "latest release tag overall"
           git describe --tags  $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
 
 
