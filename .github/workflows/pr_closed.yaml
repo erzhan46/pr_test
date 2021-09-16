@@ -111,8 +111,10 @@ jobs:
               RELEASE_VERSION="${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
               RELEASE_VERSION="release-${RELEASE_VERSION#v}.0"
               echo "Merge commit contains code and will be tagged with: ${RELEASE_VERSION}"
-              git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
-              git tag -a "code" -m "Deployment contain code changes" ${{ github.sha }}
+              git tag -a -f "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
+              git push -f origin "${RELEASE_VERSION}"
+              git tag -a -f "code" -m "Deployment contain code changes" ${{ github.sha }}
+              git push -f origin "code"
               echo "::set-output name=release_version::${RELEASE_VERSION}"
             fi
           fi
@@ -127,9 +129,11 @@ jobs:
               DEPLOYMENT=$(expr ${PREV_DEPLOYMENT} + 1)
               RELEASE_VERSION="${VERSION}.${DEPLOYMENT}"
               git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
+              git push -f origin "${RELEASE_VERSION}"
             fi
             echo "Merge commit contains configuration and will be tagged with: ${RELEASE_VERSION}"
             git tag -a "config" -m "Deployment contain configuration changes" ${{ github.sha }}
+            git push -f origin "config"
             echo "::set-output name=release_version::${RELEASE_VERSION}"
           fi
         # Need logic to check for environment targeted deployment
@@ -137,8 +141,10 @@ jobs:
       - name: Tag for promotion start
         id: promotion_start
         run: |
-          git tag -a -f "learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
-          git push -f origin "learning-start"
+          if [[ -n "${{ steps.tag_code_changes.outputs.release_version }}" || -n "${{ steps.tag_config_changes.outputs.release_version }}" ]]; then
+            git tag -a -f "learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
+            git push -f origin "learning-start"
+          fi
 
 
 
