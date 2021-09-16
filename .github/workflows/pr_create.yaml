@@ -57,7 +57,7 @@ jobs:
           echo "latest release tag overall"
           git describe --tags  $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
       - name: Check code version tag presense
-        run:
+        run: |
           if [[ -n "${{ steps.code_changed.outputs.files }}" && -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
             echo "Pull request should contain at least one commit with the version tag if code files are changed"
             echo "Files changed: ${{ steps.code_changed.outputs.files }}"
