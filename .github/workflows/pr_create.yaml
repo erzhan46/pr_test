@@ -21,9 +21,6 @@ jobs:
           COMMIT_URL="${{ github.event.pull_request._links.commits.href }}?per_page=250"
           curl -s ${COMMIT_URL} | jq '.[].commit.message'
           COMMIT_LIST=$(curl -s ${COMMIT_URL} | jq '.[].sha')
-          echo ${COMMIT_LIST}
-          exit 1
-          COMMIT_LIST=$(git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA})
           COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
           COMMIT_LIST="${COMMIT_LIST//$'\n'/'%0A'}"
           COMMIT_LIST="${COMMIT_LIST//$'\r'/'%0D'}"
