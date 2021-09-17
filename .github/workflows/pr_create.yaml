@@ -18,10 +18,11 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
-          BASE_SHA=$(git rev-parse origin/${{ github.base_ref }}^2)
-          echo $BASE_SHA
-          HEAD_SHA=$(git rev-parse origin/${{ github.head_ref }})
-          echo $HEAD_SHA
+          COMMIT_URL="${{ github.event.pull_request.commits }}?per_page=250"
+          curl ${COMMIT_URL} | jq '.[].commit.message'
+          COMMIT_LIST=$(curl ${COMMIT_URL} | jq '.[].sha')
+          echo ${COMMIT_LIST}
+          exit 1
           COMMIT_LIST=$(git rev-list --ancestry-path ${BASE_SHA}..${HEAD_SHA})
           COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
           COMMIT_LIST="${COMMIT_LIST//$'\n'/'%0A'}"
