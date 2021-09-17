@@ -33,16 +33,9 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
-          ARR=($(git rev-list --merges  --max-count=2 origin/main))
-          BASE_SHA=${ARR[1]}
-          echo $BASE_SHA
-          HEAD_SHA=${ARR[0]}
-          echo $HEAD_SHA
-          if [[ -z ${BASE_SHA} ]]; then
-            COMMIT_LIST=$(git rev-list ${HEAD_SHA})
-          else
-            COMMIT_LIST=$(git rev-list ${BASE_SHA}..${HEAD_SHA})
-          fi
+          COMMIT_URL="${{ github.event.pull_request._links.commits.href }}?per_page=250"
+          curl -s ${COMMIT_URL} | jq '.[].commit.message'
+          COMMIT_LIST=$(curl -s ${COMMIT_URL} | jq '.[].sha')
           COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
           COMMIT_LIST="${COMMIT_LIST//$'\n'/'%0A'}"
           COMMIT_LIST="${COMMIT_LIST//$'\r'/'%0D'}"
@@ -55,17 +48,12 @@ jobs:
       - name: Get changed files
         id: get_changed_files
         run: |
-          ARR=($(git rev-list --merges  --max-count=2 origin/main))
-          BASE_SHA=${ARR[1]}
-          echo $BASE_SHA
-          HEAD_SHA=${ARR[0]}
-          echo $HEAD_SHA
-          if [[ -z ${BASE_SHA} ]]; then
-             DIFF=$(git diff --name-only ${HEAD_SHA})
-          else
-            DIFF=$(git diff --name-only ${HEAD_SHA} ${BASE_SHA})
-          fi
-          echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
+          COMMIT_URL="${{ github.event.pull_request._links.commits.href }}?per_page=250"
+          ARR=($(curl -s ${COMMIT_URL} | jq '.[].sha'))
+          BASE_SHA=${ARR[0]}
+          HEAD_SHA=${ARR[${#ARR[@]}-1]}
+          git diff --name-only ${HEAD_SHA} ${BASE_SHA})
+          echo "Diff between ${BASE_SHA} and ${HEAD_SHA}"
           echo "$DIFF"
           DIFF="${DIFF//'%'/'%25'}"
           DIFF="${DIFF//$'\n'/'%0A'}"
