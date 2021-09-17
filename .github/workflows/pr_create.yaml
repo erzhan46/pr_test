@@ -37,7 +37,7 @@ jobs:
           ARR=($(curl -s ${COMMIT_URL} | jq '.[].sha'))
           BASE_SHA=${ARR[0]}
           HEAD_SHA=${ARR[${#ARR[@]}-1]}
-          git diff --name-only ${HEAD_SHA} ${BASE_SHA})
+          git diff --name-only ${HEAD_SHA} ${BASE_SHA}
           echo "Diff between ${BASE_SHA} and ${HEAD_SHA}"
           DIFF=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }})
           echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
