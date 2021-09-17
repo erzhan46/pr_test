@@ -18,7 +18,7 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
-          COMMIT_URL="${{ github.event.pull_request.commits }}?per_page=250"
+          COMMIT_URL="${{ github.event.pull_request._links.commits }}?per_page=250"
           curl ${COMMIT_URL} | jq '.[].commit.message'
           COMMIT_LIST=$(curl ${COMMIT_URL} | jq '.[].sha')
           echo ${COMMIT_LIST}
