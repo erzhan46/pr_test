@@ -51,7 +51,7 @@ jobs:
           COMMIT_URL="${{ github.event.pull_request._links.commits.href }}?per_page=250"
           ARR=($(curl -s ${COMMIT_URL} | jq '.[].sha'))
           BASE_SHA=${ARR[0]}
-          HEAD_SHA=${ARR[${#ARR[@]}-1]}
+          HEAD_SHA=$(git rev-list -1 ${BASE_SHA}^1)
           DIFF=$(git diff --name-only ${HEAD_SHA} ${BASE_SHA})
           echo "Diff between ${BASE_SHA} and ${HEAD_SHA}"
           echo "$DIFF"
