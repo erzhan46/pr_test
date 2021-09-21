@@ -7,4 +7,3 @@ tags = {
   Environment = "Dev"
   Platform    = "ARO"
 }
-
