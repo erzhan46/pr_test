@@ -68,9 +68,9 @@ jobs:
           echo "latest code tag in current PR"
           echo ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}
           echo "latest code tag overall"
-          git describe --tags --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
+          git describe --tags --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo ""
           echo "latest release tag overall"
-          git describe --tags --match="release-[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1)
+          git describe --tags --match="release-[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo ""
       - name: Check code version tag presense
         run: |
           if [[ -n "${{ steps.files_scope.outputs.code_files }}" && -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
