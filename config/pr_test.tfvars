@@ -4,7 +4,7 @@ aro_vnet_resource_group_name = "yob-rg"
 aro_location 			     = "eastus"
 
 tags = {
-    Environment = "Dev"
-    Platform    = "ARO"
+  Environment = "Dev"
+  Platform    = "ARO"
 }
 
