@@ -7,7 +7,7 @@ on:
     types: [closed]
 
 jobs:
-  reject:
+  rejected:
     if: github.event.pull_request.merged != true
     runs-on: ubuntu-latest
     steps:
@@ -15,7 +15,7 @@ jobs:
       - run: |
           echo "PR rejected"
 
-  merged:
+  merge-validation:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
