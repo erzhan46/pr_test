@@ -131,7 +131,7 @@ jobs:
             else
               echo "Merge commit contains configuration and code and already tagged"
             fi
-            git tag -a "config" -m "Deployment contain configuration changes" ${{ github.sha }}
+            git tag -a -f "config" -m "Deployment contain configuration changes" ${{ github.sha }}
             git push -f origin "config"
             echo "::set-output name=release_version::${RELEASE_VERSION}"
           fi
