@@ -33,13 +33,15 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
-          COMMIT_URL="${{ github.event.pull_request._links.commits.href }}?per_page=250"
-          curl -s ${COMMIT_URL} | jq '.[].commit.message'
-          COMMIT_LIST=$(curl -s ${COMMIT_URL} | jq '.[].sha')
+          curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].commit.message'
+          COMMIT_LIST=$(curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].sha')
           COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
           COMMIT_LIST="${COMMIT_LIST//$'\n'/'%0A'}"
           COMMIT_LIST="${COMMIT_LIST//$'\r'/'%0D'}"
           echo "::set-output name=commits::${COMMIT_LIST}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
       - name: Get code version tag in scope of PR (latest/if any)
         id: get_latest_code_tag
         run: |
@@ -48,8 +50,7 @@ jobs:
       - name: Get changed files
         id: get_changed_files
         run: |
-          COMMIT_URL="${{ github.event.pull_request._links.commits.href }}?per_page=250"
-          ARR=($(curl -s ${COMMIT_URL} | jq '.[].sha'))
+          ARR=($(curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].sha'))
           BASE_SHA=$(echo ${ARR[0]} | tr -d '"')
           HEAD_SHA=$(git rev-list -1 ${BASE_SHA}^1)
           DIFF=$(git diff --name-only ${HEAD_SHA} ${BASE_SHA})
@@ -59,6 +60,9 @@ jobs:
           DIFF="${DIFF//$'\n'/'%0A'}"
           DIFF="${DIFF//$'\r'/'%0D'}"
           echo "::set-output name=files::${DIFF}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
       - name: Files scope
         id: files_scope
         run: |
