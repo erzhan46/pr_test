@@ -19,8 +19,8 @@ jobs:
         id: get_commits
         run: |
           COMMIT_URL="${{ github.event.pull_request._links.commits.href }}?per_page=250"
-          curl -s ${COMMIT_URL} | jq '.[].commit.message'
-          COMMIT_LIST=$(curl -s ${COMMIT_URL} | jq '.[].sha')
+          curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].commit.message'
+          COMMIT_LIST=$(curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].sha')
           COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
           COMMIT_LIST="${COMMIT_LIST//$'\n'/'%0A'}"
           COMMIT_LIST="${COMMIT_LIST//$'\r'/'%0D'}"
