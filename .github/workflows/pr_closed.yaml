@@ -90,7 +90,7 @@ jobs:
           echo "latest code tag overall"
           git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo ""
           echo "latest release tag overall"
-          git describe --tags --match="release-[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo ""
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' $(git rev-list --tags='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --max-count=1) 2>/dev/null || echo ""
       - name: Tag Code changes
         id: tag_code_changes
         run: |
@@ -116,7 +116,7 @@ jobs:
           if [[ -n "${{ steps.files_scope.outputs.conf_files }}" ]]; then
             RELEASE_VERSION="${{ steps.tag_code_changes.outputs.release_version }}"
             if [[ -z "${RELEASE_VERSION}" ]]; then
-              RELEASE_VERSION=$(git describe --tags --match="release-[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="release-[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo "")
+              RELEASE_VERSION=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' $(git rev-list --tags='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --max-count=1) 2>/dev/null || echo "")
               if [[ -z "${RELEASE_VERSION}" ]]; then
                 RELEASE_VERSION="release-0.0.0"
               else
