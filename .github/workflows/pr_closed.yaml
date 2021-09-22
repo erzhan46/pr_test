@@ -103,10 +103,10 @@ jobs:
               RELEASE_VERSION="${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
               RELEASE_VERSION="release-${RELEASE_VERSION#v}.0"
               echo "Merge commit contains code and will be tagged with: ${RELEASE_VERSION}"
-              git tag -a -f "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
-              git push -f origin "${RELEASE_VERSION}"
-              git tag -a -f "code" -m "Deployment contain code changes" ${{ github.sha }}
-              git push -f origin "code"
+              git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
+              git push origin "${RELEASE_VERSION}"
+              git tag -a "${RELEASE_VERSION}-code" -m "Deployment contain code changes" ${{ github.sha }}
+              git push origin "${RELEASE_VERSION}-code"
               echo "::set-output name=release_version::${RELEASE_VERSION}"
             fi
           fi
@@ -127,12 +127,12 @@ jobs:
               fi
               echo "Merge commit contains configuration and will be tagged with: ${RELEASE_VERSION}"
               git tag -a "${RELEASE_VERSION}" -m "Deployment release ${RELEASE_VERSION}" ${{ github.sha }}
-              git push -f origin "${RELEASE_VERSION}"
+              git push origin "${RELEASE_VERSION}"
             else
               echo "Merge commit contains configuration and code and already tagged"
             fi
-            git tag -a -f "config" -m "Deployment contain configuration changes" ${{ github.sha }}
-            git push -f origin "config"
+            git tag -a "${RELEASE_VERSION}-config" -m "Deployment contain configuration changes" ${{ github.sha }}
+            git push origin "${RELEASE_VERSION}-config"
             echo "::set-output name=release_version::${RELEASE_VERSION}"
           fi
         # Need logic to check for environment targeted deployment
@@ -141,8 +141,8 @@ jobs:
         id: promotion_start
         run: |
           if [[ -n "${{ steps.tag_code_changes.outputs.release_version }}" || -n "${{ steps.tag_config_changes.outputs.release_version }}" ]]; then
-            git tag -a -f "learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
-            git push -f origin "learning-start"
+            git tag -a "${RELEASE_VERSION}-learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
+            git push origin "${RELEASE_VERSION}-learning-start"
           fi
 
 
