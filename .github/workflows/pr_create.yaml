@@ -18,6 +18,8 @@ jobs:
       - name: Get commits in PR
         id: get_commits
         run: |
+          which jq
+          which yq
           echo "token: ${GITHUB_TOKEN}"
           curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].commit.message'
           COMMIT_LIST=$(curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].sha')
