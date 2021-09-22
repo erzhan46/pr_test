@@ -141,6 +141,10 @@ jobs:
         id: promotion_start
         run: |
           if [[ -n "${{ steps.tag_code_changes.outputs.release_version }}" || -n "${{ steps.tag_config_changes.outputs.release_version }}" ]]; then
+            RELEASE_VERSION="${{ steps.tag_code_changes.outputs.release_version }}"
+            if [[ -z "${RELEASE_VERSION}" ]]; then
+              RELEASE_VERSION="${{ steps.tag_config_changes.outputs.release_version }}"
+            fi
             git tag -a "${RELEASE_VERSION}-learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
             git push origin "${RELEASE_VERSION}-learning-start"
           fi
