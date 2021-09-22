@@ -1,4 +1,4 @@
-name: Pull request closed with or without merge
+name: Environment deployment
 
 on:
   create:

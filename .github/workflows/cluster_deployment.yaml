@@ -1,4 +1,4 @@
-name: Pull request closed with or without merge
+name: Cluster deployment
 
 on:
   workflow_dispatch:
