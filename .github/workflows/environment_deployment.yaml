@@ -21,18 +21,21 @@ jobs:
         run: |
           git config --global user.email "infra-pipeline@dh.com"
           git config --global user.name "Infrastructure Pipeline"
-      - run: |
-          git fetch --prune --tags origin
+          #      - run: |
+          #git fetch --prune --tags origin
       - name: Get relevant tags
         id: get_tags
         run: |
-          RELEASE_TAG=$(git describe --tags --match="release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${{ github.sha }} 2>/dev/null)
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 
+          RELEASE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 2>/dev/null)
           if [[ -z "${RELEASE_TAG}" ]]; then
             echo "Release version tag is not set - Exiting"
             exit 1
           fi
-          CODE_TAG=$(git describe --tags --match="code" --exact-match  ${{ github.sha }} 2>/dev/null)
-          CONFIG_TAG=$(git describe --tags --match="config" --exact-match  ${{ github.sha }} 2>/dev/null)
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }}
+          CODE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 2>/dev/null)
+          CONFIG_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }} 2>/dev/null)
           if [[ -z "${CODE_TAG}" && -z "${CONFIG_TAG}" ]]; then
             echo "Code or configuration tag is not set - Exiting"
             exit 1
