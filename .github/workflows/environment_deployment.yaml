@@ -1,7 +1,7 @@
 name: Environment deployment
 
 on:
-  create:
+  push:
     tags:
       - 'release-*-learning-start'
       - 'release-*-engineering-start'
