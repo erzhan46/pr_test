@@ -14,9 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 251
-      - run: |
-          git fetch --prune --tags origin 
+          fetch-depth: 0
+            #      - run: |
+            #          git fetch --prune --tags origin 
       - name: Get commits in PR
         id: get_commits
         run: |

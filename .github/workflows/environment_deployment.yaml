@@ -27,16 +27,16 @@ jobs:
       - name: Get relevant tags
         id: get_tags
         run: |
-          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 
-          RELEASE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 2>/dev/null)
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 2>/dev/null || echo ""
+          RELEASE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
           if [[ -z "${RELEASE_TAG}" ]]; then
             echo "Release version tag is not set - Exiting"
             exit 1
           fi
-          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 
-          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }}
-          CODE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 2>/dev/null)
-          CONFIG_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }} 2>/dev/null)
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 2>/dev/null || echo ""
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }} 2>/dev/null || echo ""
+          CODE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
+          CONFIG_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
           if [[ -z "${CODE_TAG}" && -z "${CONFIG_TAG}" ]]; then
             echo "Code or configuration tag is not set - Exiting"
             exit 1
@@ -49,6 +49,7 @@ jobs:
         run: |
           ENVIRONMENT="${{ github.ref }}"
           ENVIRONMENT=${ENVIRONMENT%-start}
+          ENVIRONMENT=${ENVIRONMENT#refs/tags/release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-}
           echo ${ENVIRONMENT}
           echo "::set-output name=environment::${ENVIRONMENT}"
 
