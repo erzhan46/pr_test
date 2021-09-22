@@ -1,0 +1,18 @@
+name: Pull request closed with or without merge
+
+on:
+  workflow_dispatch:
+    branches:
+      - main
+
+jobs:
+  test1:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Job started"
+      - run: |
+          sleep 300
+      - run: |
+          echo "Job finished"
+

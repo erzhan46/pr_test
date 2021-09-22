@@ -18,6 +18,8 @@ jobs:
   merge-validation:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -40,7 +42,6 @@ jobs:
           COMMIT_LIST="${COMMIT_LIST//$'\r'/'%0D'}"
           echo "::set-output name=commits::${COMMIT_LIST}"
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
       - name: Get code version tag in scope of PR (latest/if any)
         id: get_latest_code_tag
@@ -61,7 +62,6 @@ jobs:
           DIFF="${DIFF//$'\r'/'%0D'}"
           echo "::set-output name=files::${DIFF}"
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
       - name: Files scope
         id: files_scope
