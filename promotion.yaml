@@ -1,0 +1,14 @@
+environments:
+  learning:
+    - name: pr_test
+      zone: eastus
+      priority: 1
+      workspace: pr_test
+    - name: pr_test2
+      zone: westus
+      priority: 1
+      workspace: pr_test2
+    - name: pr_test3
+      zone: northeu
+      priority: 2
+      workspace: pr_test3
