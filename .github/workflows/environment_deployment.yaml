@@ -3,9 +3,9 @@ name: Environment deployment
 on:
   create:
     tags:
-      - learning-start
-      - engineering-start
-      - customer-start
+      - 'release-*-learning-start'
+      - 'release-*-engineering-start'
+      - 'release-*-customer-start'
 
 jobs:
 
