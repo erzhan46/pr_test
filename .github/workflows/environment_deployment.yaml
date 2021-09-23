@@ -85,6 +85,37 @@ jobs:
           echo "Release version: ${RELEASE_VERSION}"
           echo "Code tag: ${CODE_TAG}"
           echo "Config tag: ${CONFIG_TAG}"
+      - name: Cluster deployment
+        id: cluster_deployment
+        run: |
+          cat promotion.yaml | yq e ".environments.${DEPLOYMENT_ENVIRONMENT}[].priority" - | sort -u | while read PRIORITY
+          do
+            echo "Processing priority ${PRIORITY} clusters"
+            # Submitting workflow runs for each cluster
+            cat promotion.yaml| yq  e "[.environments.learning.[] | select(.priority == \"${PRIORITY}\")] as \$clusters | \$clusters[].id" - | while read CLUSTER_ID
+            do
+              ZONE=$(cat promotion.yaml| yq  e ".environments.learning.[] | select(.id == \"${CLUSTER_ID}\") as \$cluster | \$cluster.zone" -)
+              WORKSPACE=$(cat promotion.yaml| yq  e ".environments.learning.[] | select(.id == \"${CLUSTER_ID}\") as \$cluster | \$cluster.workspace" -)
+              TFVARS_FILE=$(cat promotion.yaml| yq  e ".environments.learning.[] | select(.id == \"${CLUSTER_ID}\") as \$cluster | \$cluster.tfvars_file" -)
+              echo "Cluster Id: ${CLUSTER_ID}"
+              echo "Zone: ${ZONE}"
+              echo "Workspace: ${WORKSPACE}"
+              echo "Tfvars file: ${TFVARS_FILE}"
+            done
+
+
+            # Wait for completion
+            DONE=false
+            FAILED=false
+            while [[ !${DONE} ]]
+            do
+              # Check workflow run status
+              sleep 10
+              DONE=true
+            done
+
+          done
+
 
         #1. Process tag - get environment
         #2. Scan promotion.yaml - filter environment - get priorities
