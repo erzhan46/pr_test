@@ -60,6 +60,9 @@ jobs:
   deploy_environment:
     runs-on: ubuntu-latest
     needs: identify_environment
+    defaults:
+      run:
+        shell: bash
     env:
       GITHUB_TOKEN: ${{ github.token }}
       DEPLOYMENT_ENVIRONMENT: ${{ needs.identify_environment.outputs.environment }}
@@ -92,14 +95,15 @@ jobs:
           do
             echo "Processing priority ${PRIORITY} clusters"
             # Submitting workflow runs for each cluster
-            cat promotion.yaml| yq  e '[.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' - | while read CLUSTER_ID
+            cat promotion.yaml| yq  e '[.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' -
+            cat promotion.yaml| yq  e '[.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' - | while read CLUSTERID
             do
-              echo "Cluster Id: ${CLUSTER_ID}"
-              ZONE=$(cat promotion.yaml4| yq  e '.environments.learning.[] | select(.id == "'${CLUSTER_ID}'") as $cluster | $cluster.zone' -)
+              echo "Cluster Id: ${CLUSTERID}"
+              ZONE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.zone' -)
               echo "Zone: ${ZONE}"
-              WORKSPACE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTER_ID}'") as $cluster | $cluster.workspace' -)
+              WORKSPACE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.workspace' -)
               echo "Workspace: ${WORKSPACE}"
-              TFVARS_FILE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTER_ID}'") as $cluster | $cluster.tfvars_file' -)
+              TFVARS_FILE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.tfvars_file' -)
               echo "Tfvars file: ${TFVARS_FILE}"
             done
             echo ""
