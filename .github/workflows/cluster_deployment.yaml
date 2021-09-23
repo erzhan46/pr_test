@@ -29,7 +29,7 @@ jobs:
           echo "Workspace: ${WORKSPACE}"
           echo "Tfvars file: ${TFVARS_FILE}"
       - run: |
-          sleep 300
+          sleep 30
       - run: |
           echo "Job finished"
 
