@@ -31,8 +31,8 @@ jobs:
           git config --global user.name "Infrastructure Pipeline"
       - run: |
           echo "PR merged"
-          #      - run: |
-          #          git fetch --prune --tags origin
+      - run: |
+          git fetch --prune --tags origin
       - name: Get commits in PR
         id: get_commits
         run: |

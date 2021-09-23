@@ -15,8 +15,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-            #      - run: |
-            #          git fetch --prune --tags origin 
+      - run: |
+          git fetch --prune --tags origin 
       - name: Get commits in PR
         id: get_commits
         run: |
