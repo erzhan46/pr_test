@@ -100,7 +100,6 @@ jobs:
             # Submitting workflow runs for each cluster
             cat promotion.yaml| yq  e '[.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' - | while read CLUSTERID
             do
-              ID_ARR+=( ${ZONE} )
               ZONE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.zone' -)
               WORKSPACE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.workspace' -)
               TFVARS_FILE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.tfvars_file' -)
@@ -111,18 +110,21 @@ jobs:
               
               echo "gh workflow run ${CLUSTER_WORKFLOW} -f zone=${ZONE} -f workspace=${WORKSPACE} -f tfvars_file=${TFVARS_FILE}"
               curl -s -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${GITHUB_TOKEN}" \
-                  "https://api.github.com/repos/erzhan46/pr_test/actions/13456388/dispatches" \
+                  "https://api.github.com/repos/erzhan46/pr_test/actions/workflows/13456388/dispatches" \
                   -d '{"zone":"'${ZONE}'","workspace":"'${WORKSPACE}'","tfvars_file":"'${TFVARS_FILE}'"}'
               sleep 5 # just in case
               RUN_ID=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs?per_page=1" -H "Authorization: token ${GITHUB_TOKEN}" | jq '.workflow_runs[].id')
               echo "Run ID: ${RUN_ID}"
+              ID_ARR+=( ${ZONE} )
               RUN_ARR+=( ${RUN_ID} )
 
+              echo "Id array: ${ID_ARR[@]}"
+              echo "Run array: ${RUN_ARR[@]}"
             done
             echo ""
 
-            echo "Id array: ${ID_ARR[@]}"
-            echo "Run array: ${RUN_ARR[@]}"
+            echo "ALL Id array: ${ID_ARR[@]}"
+            echo "ALL Run array: ${RUN_ARR[@]}"
 
             # Wait for completion
             DONE=false
