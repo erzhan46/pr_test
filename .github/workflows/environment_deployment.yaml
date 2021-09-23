@@ -107,7 +107,7 @@ jobs:
             # Wait for completion
             DONE=false
             FAILED=false
-            while [[ !${DONE} ]]
+            while [[ ${DONE} == falses ]]
             do
               # Check workflow run status
               sleep 10
