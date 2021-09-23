@@ -1,14 +1,17 @@
 environments:
   learning:
-    - name: pr_test
-      zone: eastus
+    - id: pr_test
+      zone: eastus01
       priority: 1
       workspace: pr_test
-    - name: pr_test2
-      zone: westus
+      tfvars_file: config/learning/pr_test.tfvars
+    - id: pr_test2
+      zone: westus01
       priority: 1
       workspace: pr_test2
-    - name: pr_test3
-      zone: northeu
+      tfvars_file: config/learning/pr_test2.tfvars
+    - id: pr_test3
+      zone: northeu01
       priority: 2
       workspace: pr_test3
+      tfvars_file: config/learning/pr_test3.tfvars
