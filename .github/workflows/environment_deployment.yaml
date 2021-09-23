@@ -88,20 +88,21 @@ jobs:
       - name: Cluster deployment
         id: cluster_deployment
         run: |
-          cat promotion.yaml | yq e ".environments.${DEPLOYMENT_ENVIRONMENT}[].priority" - | sort -u | while read PRIORITY
+          cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -u | while read PRIORITY
           do
             echo "Processing priority ${PRIORITY} clusters"
             # Submitting workflow runs for each cluster
-            cat promotion.yaml| yq  e "[.environments.learning.[] | select(.priority == \"${PRIORITY}\")] as \$clusters | \$clusters[].id" - | while read CLUSTER_ID
+            cat promotion.yaml| yq  e '.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' - | while read CLUSTER_ID
             do
-              ZONE=$(cat promotion.yaml| yq  e ".environments.learning.[] | select(.id == \"${CLUSTER_ID}\") as \$cluster | \$cluster.zone" -)
-              WORKSPACE=$(cat promotion.yaml| yq  e ".environments.learning.[] | select(.id == \"${CLUSTER_ID}\") as \$cluster | \$cluster.workspace" -)
-              TFVARS_FILE=$(cat promotion.yaml| yq  e ".environments.learning.[] | select(.id == \"${CLUSTER_ID}\") as \$cluster | \$cluster.tfvars_file" -)
               echo "Cluster Id: ${CLUSTER_ID}"
+              ZONE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTER_ID}'") as $cluster | $cluster.zone' -)
               echo "Zone: ${ZONE}"
+              WORKSPACE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTER_ID}'") as $cluster | $cluster.workspace' -)
               echo "Workspace: ${WORKSPACE}"
+              TFVARS_FILE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTER_ID}'") as $cluster | $cluster.tfvars_file' -)
               echo "Tfvars file: ${TFVARS_FILE}"
             done
+            echo ""
 
 
             # Wait for completion
