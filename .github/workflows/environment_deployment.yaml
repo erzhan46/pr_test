@@ -118,13 +118,8 @@ jobs:
               ID_ARR+=( ${ZONE} )
               RUN_ARR+=( ${RUN_ID} )
 
-              echo "Id array: ${ID_ARR[@]}"
-              echo "Run array: ${RUN_ARR[@]}"
             done
             echo ""
-
-            echo "ALL Id array: ${ID_ARR[@]}"
-            echo "ALL Run array: ${RUN_ARR[@]}"
 
             # Wait for completion
             DONE=false
@@ -138,8 +133,8 @@ jobs:
                 ID=${ID_ARR[${ARR_I}]}
                 RUN=${RUN_ARR[${ARR_I}]}
                 echo "Checking id: ${ID} Run:${RUN}"
-                STATUS=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.status'}
-                CONCLUSION=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.conclusion'}
+                STATUS=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.status')
+                CONCLUSION=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.conclusion')
                 if [[ ${STATUS} != "completed" ]]; then
                   DONE=false
                   echo "Still running"
