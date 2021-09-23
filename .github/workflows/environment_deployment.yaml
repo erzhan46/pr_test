@@ -111,14 +111,15 @@ jobs:
               
               echo "gh workflow run ${CLUSTER_WORKFLOW} -f zone=${ZONE} -f workspace=${WORKSPACE} -f tfvars_file=${TFVARS_FILE}"
               #sleep 5 # just in case
-              RUN_ID=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs?per_page=1" | jq '.workflow_runs[].id')
+              RUN_ID=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs?per_page=1" -H "Authorization: token ${GITHUB_TOKEN}" | jq '.workflow_runs[].id')
               echo "Run ID: ${RUN_ID}"
               RUN_ARR+=( ${RUN_ID} )
 
             done
             echo ""
 
-            gh run list --workflow=cluster_deployment.yaml
+            echo "Id array: ${ID_ARR[@]}"
+            echo "Run array: ${RUN_ARR[@]}"
 
             # Wait for completion
             DONE=false
@@ -127,14 +128,13 @@ jobs:
             do
               DONE=true
               # Check workflow run status
-              echo ${ID_ARR[@]}
               for ARR_I in ${!ID_ARR[@]}
               do
                 ID=${ID_ARR[${ARR_I}]}
                 RUN=${RUN_ARR[${ARR_I}]}
                 echo "Checking id: ${ID} Run:${RUN}"
-                STATUS=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}" | jq '.status'}
-                CONCLUSION=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}" | jq '.conclusion'}
+                STATUS=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.status'}
+                CONCLUSION=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.conclusion'}
                 if [[ ${STATUS} != "completed" ]]; then
                   DONE=false
                   echo "Still running"
@@ -144,7 +144,7 @@ jobs:
                   echo "Cluster deployment failed. Id: ${ID} Run: ${RUN}"
                 fi
               done
-              sleep 30
+              sleep 5
             done
 
             if [[ ${FAILED} == true ]]; then
