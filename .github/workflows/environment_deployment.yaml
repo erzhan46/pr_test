@@ -98,7 +98,7 @@ jobs:
             ID_ARR=()
             RUN_ARR=()
             # Submitting workflow runs for each cluster
-            for CLUSTERID in $()cat promotion.yaml| yq  e '[.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' -)
+            for CLUSTERID in $(cat promotion.yaml| yq  e '[.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' -)
             do
               ZONE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.zone' -)
               WORKSPACE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.workspace' -)
