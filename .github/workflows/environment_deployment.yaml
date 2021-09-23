@@ -65,6 +65,7 @@ jobs:
         shell: bash
     env:
       GITHUB_TOKEN: ${{ github.token }}
+      CLUSTER_WORKFLOW: "cluster_deployment.yaml"
       DEPLOYMENT_ENVIRONMENT: ${{ needs.identify_environment.outputs.environment }}
       RELEASE_VERSION: ${{ needs.identify_environment.outputs.release_tag }}
       CODE_TAG: ${{ needs.identify_environment.outputs.code_tag }}
@@ -94,9 +95,12 @@ jobs:
           cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -u | while read PRIORITY
           do
             echo "Processing priority ${PRIORITY} clusters"
+            ID_ARR=()
+            RUN_ARR=()
             # Submitting workflow runs for each cluster
             cat promotion.yaml| yq  e '[.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' - | while read CLUSTERID
             do
+              IDARR+=( ${ZONE} )
               ZONE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.zone' -)
               WORKSPACE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.workspace' -)
               TFVARS_FILE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.tfvars_file' -)
@@ -104,6 +108,13 @@ jobs:
               echo "Zone: ${ZONE}"
               echo "Workspace: ${WORKSPACE}"
               echo "Tfvars file: ${TFVARS_FILE}"
+              
+              gh workflow run ${CLUSTER_WORKFLOW} -f zone=${ZONE} -f workspace=${WORKSPACE} -f tfvars_file=${TFVARS_FILE}
+              sleep 5 # just in case
+              RUN_ID=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs?per_page=1" | jq '.workflow_runs[].id')
+              echo "Run ID: ${RUN_ID}"
+              RUN_ARR+=( ${RUN_ID} )
+
             done
             echo ""
 
@@ -111,12 +122,33 @@ jobs:
             # Wait for completion
             DONE=false
             FAILED=false
-            while [[ ${DONE} == falses ]]
+            while [[ ${DONE} == false ]]
             do
-              # Check workflow run status
-              sleep 10
               DONE=true
+              # Check workflow run status
+              for ARR_I in ${!ID_ARR[@]}
+              do
+                ID=${ID_ARR[${ARR_I}]}
+                RUN=${RUN_ARR[${ARR_I}]}
+                echo "Checking id: ${ID} Run:${RUN}"
+                STATUS=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}" | jq '.status'}
+                CONCLUSION=${curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}" | jq '.conclusion'}
+                if [[ ${STATUS} != "completed" ]]; then
+                  DONE=false
+                  echo "Still running"
+                fi
+                if [[ ${STATUS} == "completed" && ${CONCLUSION} != "success" ]]; then
+                  FAILED=true
+                  echo "Cluster deployment failed. Id: ${ID} Run: ${RUN}"
+                fi
+              done
+              sleep 30
             done
+
+            if [[ ${FAILED} == true ]]; then
+              echo "One of the cluster deployment jobs failed - Exiting"
+              exit 1
+            fi
 
           done
 

@@ -4,13 +4,30 @@ on:
   workflow_dispatch:
     branches:
       - main
+    inputs:
+      zone:
+        description: 'Cluster name'
+        required: true
+      workspace:
+        description: 'Terraform cloud workspace'
+        required: true
+      tfvars_file:
+        description: 'Path and file name for tfvars file to be used for deployment'
+        required: true
 
 jobs:
   test1:
     runs-on: ubuntu-latest
+    env:
+      ZONE: ${{ github.event.inputs.zone }}
+      WORKSPACE: ${{ github.event.inputs.workspace }}
+      TFVARS_FILE: ${{ github.event.inputs.tfvars_file }}
     steps:
       - run: |
           echo "Job started"
+          echo "Zone: ${ZONE}"
+          echo "Workspace: ${WORKSPACE}"
+          echo "Tfvars file: ${TFVARS_FILE}"
       - run: |
           sleep 300
       - run: |
