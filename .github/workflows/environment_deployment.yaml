@@ -118,6 +118,7 @@ jobs:
             done
             echo ""
 
+            gh run list --workflow=cluster_deployment.yaml
 
             # Wait for completion
             DONE=false
@@ -126,6 +127,7 @@ jobs:
             do
               DONE=true
               # Check workflow run status
+              echo ${ID_ARR[@]}
               for ARR_I in ${!ID_ARR[@]}
               do
                 ID=${ID_ARR[${ARR_I}]}
