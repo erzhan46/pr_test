@@ -92,7 +92,7 @@ jobs:
           do
             echo "Processing priority ${PRIORITY} clusters"
             # Submitting workflow runs for each cluster
-            cat promotion.yaml| yq  e '.environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' - | while read CLUSTER_ID
+            cat promotion.yaml| yq  e '[].environments.learning.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' - | while read CLUSTER_ID
             do
               echo "Cluster Id: ${CLUSTER_ID}"
               ZONE=$(cat promotion.yaml| yq  e '.environments.learning.[] | select(.id == "'${CLUSTER_ID}'") as $cluster | $cluster.zone' -)
