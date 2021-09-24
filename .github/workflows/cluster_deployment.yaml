@@ -23,20 +23,21 @@ jobs:
       WORKSPACE: ${{ github.event.inputs.workspace }}
       TFVARS_FILE: ${{ github.event.inputs.tfvars_file }}
     steps:
-      - run: |
-          echo "Job started"
-          echo "Zone: ${ZONE}"
-          echo "Workspace: ${WORKSPACE}"
-          echo "Tfvars file: ${TFVARS_FILE}"
-          cp code/* .
-          cp ${TFVARS_FILE} ./terraform.tfvars
-          ls -al
-
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
           ssh-key: "${{ secrets.COMMIT_KEY }}"
+
+      - run: |
+          echo "Job started"
+          echo "Zone: ${ZONE}"
+          echo "Workspace: ${WORKSPACE}"
+          echo "Tfvars file: ${TFVARS_FILE}"
+          ls -al *
+          cp code/* .
+          cp ${TFVARS_FILE} ./terraform.tfvars
+          ls -al
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
