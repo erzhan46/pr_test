@@ -155,7 +155,7 @@ jobs:
                   echo "Cluster deployment failed. Id: ${ID} Run: ${RUN}"
                 fi
               done
-              sleep 10
+              sleep 11
             done
 
             if [[ ${FAILED} == true ]]; then
