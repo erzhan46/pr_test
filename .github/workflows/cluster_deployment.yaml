@@ -32,4 +32,5 @@ jobs:
           sleep 30
       - run: |
           echo "Job finished"
+          exit 1
 
