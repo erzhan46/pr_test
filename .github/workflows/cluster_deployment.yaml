@@ -37,7 +37,7 @@ jobs:
           echo "Tfvars file: ${TFVARS_FILE}"
           ls -al *
           cp code/* .
-          cp ${TFVARS_FILE} ./terraform.tfvars
+          cp ${TFVARS_FILE} ./terraform.auto.tfvars
           ls -al
 
       - name: Setup Terraform
@@ -67,7 +67,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=terraform.tfvars -no-color
+        run: terraform plan -no-color
         continue-on-error: true
 
       - name: Terraform Plan Status
@@ -75,5 +75,5 @@ jobs:
         run: exit 1
 
       - name: Terraform Apply
-        run: terraform apply -var-file=terraform.tfvars -auto-approve
+        run: terraform apply -auto-approve
 
