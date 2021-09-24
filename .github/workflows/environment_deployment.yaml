@@ -102,7 +102,7 @@ jobs:
       - name: Cluster deployment
         id: cluster_deployment
         env:
-          COMMIT_KEY: ${{ secrets.COMMIT_KEY }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -u | while read PRIORITY
           do
@@ -121,7 +121,7 @@ jobs:
               echo "Tfvars file: ${TFVARS_FILE}"
               
               WORKFLOW_ID=${{ steps.get_workflow.outputs.id }}
-              curl -s -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${COMMIT_KEY}" \
+              curl -s -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${PAT_TOKEN}" \
                   "https://api.github.com/repos/erzhan46/pr_test/actions/workflows/${WORKFLOW_ID}/dispatches" \
                   -d '{"ref": "'"${{ github.ref }}"'","inputs": { "zone": "'"${ZONE}"'", "workspace": "'"${WORKSPACE}"'", "tfvars_file": "'"${TFVARS_FILE}"'" }}'
               sleep 5 # just in case
