@@ -5,13 +5,3 @@ environments:
       priority: 1
       workspace: pr_test
       tfvars_file: config/learning/pr_test.tfvars
-    - id: pr_test2
-      zone: westus01
-      priority: 1
-      workspace: pr_test2
-      tfvars_file: config/learning/pr_test2.tfvars
-    - id: pr_test3
-      zone: northeu01
-      priority: 2
-      workspace: pr_test3
-      tfvars_file: config/learning/pr_test3.tfvars
