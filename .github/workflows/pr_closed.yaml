@@ -53,7 +53,8 @@ jobs:
         id: get_changed_files
         run: |
           ARR=($(curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].sha'))
-          BASE_SHA=$(echo ${ARR[0]} | tr -d '"')
+          #BASE_SHA=$(echo ${ARR[0]} | tr -d '"')
+          BASE_SHA=$(echo ${ARR[${#ARR[@]}-1]} | tr -d '"')
           HEAD_SHA=$(git rev-list -1 ${BASE_SHA}^1)
           DIFF=$(git diff --name-only ${HEAD_SHA} ${BASE_SHA})
           echo "Diff between ${BASE_SHA} and ${HEAD_SHA}"
