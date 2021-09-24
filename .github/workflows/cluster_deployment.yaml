@@ -22,6 +22,7 @@ jobs:
       ZONE: ${{ github.event.inputs.zone }}
       WORKSPACE: ${{ github.event.inputs.workspace }}
       TFVARS_FILE: ${{ github.event.inputs.tfvars_file }}
+      ORGANIZATION: erzhan467
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -47,7 +48,10 @@ jobs:
 
       - name: Terraform Set workspace
         id: workspace
-        run: terraform workspace select ${{ github.event.inputs.workspace }}
+        run: |
+          terraform workspace list
+          echo -e "terraform {\n  backend \"remote\" {\n    organization = \"${ORGANIZATION}\"\n\n    workspaces {\n      name = \"${WORKSPACE}\"\n    }\n  }\n}" > workspace.tf
+          cat workspace.tf
 
       - name: Terraform Format
         id: fmt
