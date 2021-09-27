@@ -1,6 +1,6 @@
 subscription = "933d9573-efeb-4b58-8853-7e361cf807b6"
 
-aro_vnet_resource_group_name = "yob4-rg"
+aro_vnet_resource_group_name = "yob5-rg"
 aro_location                 = "eastus"
 
 tags = {
