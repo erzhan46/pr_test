@@ -172,7 +172,7 @@ jobs:
 
       - name: Clusters deployment failure
         id: clusters_failure
-        if steps.clusters_deployment.outcome  == 'failure'
+        if: steps.clusters_deployment.outcome  == 'failure'
         run: |
           echo "Environment deployment failed - see 'clusters_deployment' step above for more details"
           git tag -a "${RELEASE_VERSION}-${DEPLOYMENT_ENVIRONMENT}-failed" -m "Deployment failed in ${DEPLOYMENT_ENVIRONMENT} environment" ${{ github.sha }}
