@@ -14,6 +14,9 @@ on:
       tfvars_file:
         description: 'Path and file name for tfvars file to be used for deployment'
         required: true
+      release-version:
+        description: 'Current release version'
+        required: true
 
 jobs:
   cluster_deploy:
@@ -22,6 +25,7 @@ jobs:
       ZONE: ${{ github.event.inputs.zone }}
       WORKSPACE: ${{ github.event.inputs.workspace }}
       TFVARS_FILE: ${{ github.event.inputs.tfvars_file }}
+      RELEASE_VERSION: ${{ github.event.inputs.release-version }}
       ORGANIZATION: erzhan467
     steps:
       - name: Checkout
@@ -35,10 +39,11 @@ jobs:
           echo "Zone: ${ZONE}"
           echo "Workspace: ${WORKSPACE}"
           echo "Tfvars file: ${TFVARS_FILE}"
-          ls -al *
           cp code/* .
           cp ${TFVARS_FILE} ./terraform.auto.tfvars
-          ls -al
+          git tag -a "${RELEASE_VERSION}-${ZONE}-start" -m "Deployment start in learning environment" ${{ github.sha }}
+          git push origin "${RELEASE_VERSION}-${ZONE}-start"
+
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
@@ -72,8 +77,28 @@ jobs:
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
-        run: exit 1
+        run: |
+          echo "Terraform plan failed - see 'plan' step above for more details"
+          git tag -a "${RELEASE_VERSION}-${ZONE}-failed" -m "Deployment start in learning environment" ${{ github.sha }}
+          git push origin "${RELEASE_VERSION}-${ZONE}-failed"
+          exit 1
 
       - name: Terraform Apply
+        id: apply
         run: terraform apply -auto-approve
+        continue-on-error: true
+
+      - name: Terraform Apply Status
+        if: steps.apply.outcome == 'failure'
+        run: |
+          echo "Terraform apply failed - see 'apply' step above for more details"
+          git tag -a "${RELEASE_VERSION}-${ZONE}-failed" -m "Deployment start in learning environment" ${{ github.sha }}
+          git push origin "${RELEASE_VERSION}-${ZONE}-failed"
+          exit 1
+
+      - name: Terraform Status
+        run: |
+          git tag -a "${RELEASE_VERSION}-${ZONE}-success" -m "Deployment start in learning environment" ${{ github.sha }}
+          git push origin "${RELEASE_VERSION}-${ZONE}-success"
+
 
