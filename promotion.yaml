@@ -5,3 +5,17 @@ environments:
       priority: 1
       workspace: pr_test
       tfvars_file: config/learning/pr_test.tfvars
+      vendor: aro
+    - id: pr_test2
+      zone: eastus01
+      priority: 1
+      workspace: pr_test2
+      tfvars_file: config/learning/pr_test2.tfvars
+      vendor: aro
+    - id: pr_test3
+      zone: eastus01
+      priority: 2
+      workspace: pr_test3
+      tfvars_file: config/learning/pr_test3.tfvars
+      vendor: aro
+
