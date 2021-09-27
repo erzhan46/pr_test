@@ -104,7 +104,7 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -u | while read PRIORITY
+          cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -un | while read PRIORITY
           do
             echo "Processing priority ${PRIORITY} clusters"
             ID_ARR=()
