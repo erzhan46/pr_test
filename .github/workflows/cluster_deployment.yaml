@@ -34,6 +34,11 @@ jobs:
           fetch-depth: 0
           ssh-key: "${{ secrets.COMMIT_KEY }}"
 
+      - name: Git config
+        run: |
+          git config --global user.email "infra-pipeline@dh.com"
+          git config --global user.name "Infrastructure Pipeline"
+
       - run: |
           echo "Job started"
           echo "Zone: ${ZONE}"
