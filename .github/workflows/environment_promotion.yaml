@@ -1,0 +1,142 @@
+name: Environment deployment
+
+on:
+  push:
+    tags:
+      - 'release-*-learning-success'
+      - 'release-*-engineering-success'
+      - 'release-*-customer-success'
+
+jobs:
+
+  identify_environment:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    outputs:
+      environment: ${{ steps.get_environment.outputs.environment }}
+      release_tag: ${{ steps.get_tags.outputs.release_tag }}
+      code_tag: ${{ steps.get_tags.outputs.code_tag }}
+      config_tag: ${{ steps.get_tags.outputs.config_tag }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ssh-key: "${{ secrets.COMMIT_KEY }}"
+      - name: Get relevant tags
+        id: get_tags
+        run: |
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 2>/dev/null || echo ""
+          RELEASE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
+          if [[ -z "${RELEASE_TAG}" ]]; then
+            echo "Release version tag is not set - Exiting"
+            exit 1
+          fi
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 2>/dev/null || echo ""
+          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }} 2>/dev/null || echo ""
+          CODE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-code' --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
+          CONFIG_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-config' --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
+          if [[ -z "${CODE_TAG}" && -z "${CONFIG_TAG}" ]]; then
+            echo "Code or configuration tag is not set - Exiting"
+            exit 1
+          fi
+          echo "::set-output name=release_tag::${RELEASE_TAG}"
+          echo "::set-output name=code_tag::${CODE_TAG}"
+          echo "::set-output name=config_tag::${CONFIG_TAG}"
+      - name: Identify environment
+        id: get_environment
+        run: |
+          ENVIRONMENT="${{ github.ref }}"
+          ENVIRONMENT=${ENVIRONMENT%-success}
+          ENVIRONMENT=${ENVIRONMENT#refs/tags/release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-}
+          echo ${ENVIRONMENT}
+          if [[ -z "${ENVIRONMENT}" ]]; then
+            echo "Cannot identify environment - check *-environment-success tag - Exiting"
+            exit 1
+          fi
+          echo "::set-output name=environment::${ENVIRONMENT}"
+
+
+  promote_environment:
+    runs-on: ubuntu-latest
+    needs: identify_environment
+    defaults:
+      run:
+        shell: bash
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      DEPLOYMENT_ENVIRONMENT: ${{ needs.identify_environment.outputs.environment }}
+      RELEASE_VERSION: ${{ needs.identify_environment.outputs.release_tag }}
+      CODE_TAG: ${{ needs.identify_environment.outputs.code_tag }}
+      CONFIG_TAG: ${{ needs.identify_environment.outputs.config_tag }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ssh-key: "${{ secrets.COMMIT_KEY }}"
+
+      - name: Git config
+        run: |
+          git config --global user.email "infra-pipeline@dh.com"
+          git config --global user.name "Infrastructure Pipeline"
+          #      - run: |
+          #git fetch --prune --tags origin
+          
+      - name: Debug
+        run: |
+          echo "Environment: ${DEPLOYMENT_ENVIRONMENT}"
+          echo "Release version: ${RELEASE_VERSION}"
+          echo "Code tag: ${CODE_TAG}"
+          echo "Config tag: ${CONFIG_TAG}"
+
+      - name: Promote to next environment
+        run: |
+          if [[ ${DEPLOYMENT_ENVIRONMENT} == "learning" ]]; then
+            PROMOTION_ENVIRONMENT="engineering"
+          fi
+          if [[ ${DEPLOYMENT_ENVIRONMENT} == "engineering" ]]; then
+            PROMOTION_ENVIRONMENT="customer"
+          fi
+          if [[ ${DEPLOYMENT_ENVIRONMENT} == "customer" ]]; then
+            echo "Release deployment successful"
+            exit 0
+          fi
+          if [[ -z "${PROMOTION_ENVIRONMENT}" ]]; then
+            echo "Cannot identify environment to promote to"
+            exit 1
+          fi
+          echo "Promoting to ${PROMOTION_ENVIRONMENT}"
+          git tag -a "${RELEASE_VERSION}-${PROMOTION_ENVIRONMENT}-start" -m "Deployment start in the ${PROMOTION_ENVIRONMENT} environment" ${{ github.sha }}
+          git push origin "${RELEASE_VERSION}-${PROMOTION_ENVIRONMENT}-start"
+
+
+
+  context-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJSON(job) }}
+        run: echo "$JOB_CONTEXT"
+      - name: Dump steps context
+        env:
+          STEPS_CONTEXT: ${{ toJSON(steps) }}
+        run: echo "$STEPS_CONTEXT"
+      - name: Dump runner context
+        env:
+          RUNNER_CONTEXT: ${{ toJSON(runner) }}
+        run: echo "$RUNNER_CONTEXT"
+      - name: Dump strategy context
+        env:
+          STRATEGY_CONTEXT: ${{ toJSON(strategy) }}
+        run: echo "$STRATEGY_CONTEXT"
+      - name: Dump matrix context
+        env:
+          MATRIX_CONTEXT: ${{ toJSON(matrix) }}
+        run: echo "$MATRIX_CONTEXT"
+
+

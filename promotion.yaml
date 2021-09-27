@@ -1,21 +1,34 @@
 environments:
   learning:
     - id: pr_test
-      zone: eastus01
+      zone: learn_eastus01
       priority: 1
       workspace: pr_test
       tfvars_file: config/learning/pr_test.tfvars
       vendor: aro
     - id: pr_test2
-      zone: eastus01
+      zone: learn_eastus02
       priority: 1
       workspace: pr_test2
       tfvars_file: config/learning/pr_test2.tfvars
       vendor: aro
     - id: pr_test3
-      zone: eastus01
+      zone: learn_westus01
       priority: 2
       workspace: pr_test3
       tfvars_file: config/learning/pr_test3.tfvars
       vendor: aro
-
+  engineering:
+    - id: eng_test1
+      zone: eng_eastus01
+      priority: 1
+      workspace: eng_test1
+      tfvars_file: config/engineering/eng_test1.tfvars
+      vendor: aro
+  customer:
+    - id: cust_test1
+      zone: cust_eastus01
+      priority: 1
+      workspace: cust_test1
+      tfvars_file: config/customer/cust_test1.tfvars
+      vendor: aro

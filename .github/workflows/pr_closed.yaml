@@ -147,7 +147,7 @@ jobs:
             if [[ -z "${RELEASE_VERSION}" ]]; then
               RELEASE_VERSION="${{ steps.tag_config_changes.outputs.release_version }}"
             fi
-            git tag -a "${RELEASE_VERSION}-learning-start" -m "Deployment start in learning environment" ${{ github.sha }}
+            git tag -a "${RELEASE_VERSION}-learning-start" -m "Deployment start in the learning environment" ${{ github.sha }}
             git push origin "${RELEASE_VERSION}-learning-start"
           fi
 

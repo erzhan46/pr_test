@@ -77,18 +77,21 @@ jobs:
         with:
           fetch-depth: 0
           ssh-key: "${{ secrets.COMMIT_KEY }}"
+
       - name: Git config
         run: |
           git config --global user.email "infra-pipeline@dh.com"
           git config --global user.name "Infrastructure Pipeline"
           #      - run: |
           #git fetch --prune --tags origin
+          #
       - name: Debug
         run: |
           echo "Environment: ${DEPLOYMENT_ENVIRONMENT}"
           echo "Release version: ${RELEASE_VERSION}"
           echo "Code tag: ${CODE_TAG}"
           echo "Config tag: ${CONFIG_TAG}"
+
       - name: Get workflow ID
         id: get_workflow
         run: |
@@ -99,10 +102,12 @@ jobs:
             exit 1
           fi
           echo "::set-output name=id::${WORKFLOW_ID}"
-      - name: Cluster deployment
-        id: cluster_deployment
+
+      - name: Clusters deployment
+        id: clusters_deployment
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        continue-on-error: true
         run: |
           cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -un | while read PRIORITY
           do
@@ -123,8 +128,8 @@ jobs:
               WORKFLOW_ID=${{ steps.get_workflow.outputs.id }}
               curl -s -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${PAT_TOKEN}" \
                   "https://api.github.com/repos/erzhan46/pr_test/actions/workflows/${WORKFLOW_ID}/dispatches" \
-                  -d '{"ref": "'"${{ github.ref }}"'","inputs": { "zone": "'"${ZONE}"'", "workspace": "'"${WORKSPACE}"'", "tfvars_file": "'"${TFVARS_FILE}"'" }}'
-              sleep 15 # Need timeout to let it process request - 5 seconds is not enough
+                  -d '{"ref": "'"${{ github.ref }}"'","inputs": { "zone": "'"${ZONE}"'", "workspace": "'"${WORKSPACE}"'", "tfvars_file": "'"${TFVARS_FILE}"'", "release-version": "'"${RELEASE_VERSION}"'" }}'
+              sleep 30 # Need timeout to let it process request - 5 seconds is not enough
               RUN_ID=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs?per_page=1" -H "Authorization: token ${GITHUB_TOKEN}" | jq '.workflow_runs[].id')
               echo "Run ID: ${RUN_ID}"
               ID_ARR+=( ${ZONE} )
@@ -155,7 +160,7 @@ jobs:
                   echo "Cluster deployment failed. Id: ${ID} Run: ${RUN}"
                 fi
               done
-              sleep 11
+              sleep 30
             done
 
             if [[ ${FAILED} == true ]]; then
@@ -165,22 +170,21 @@ jobs:
 
           done
 
+      - name: Clusters deployment failure
+        id: clusters_failure
+        if steps.clusters_deployment.outcome  == 'failure'
+        run: |
+          echo "Environment deployment failed - see 'clusters_deployment' step above for more details"
+          git tag -a "${RELEASE_VERSION}-${DEPLOYMENT_ENVIRONMENT}-failed" -m "Deployment failed in ${DEPLOYMENT_ENVIRONMENT} environment" ${{ github.sha }}
+          git push origin "${RELEASE_VERSION}-${DEPLOYMENT_ENVIRONMENT}-failed"
+          exit 1
 
-        #1. Process tag - get environment
-        #2. Scan promotion.yaml - filter environment - get priorities
-        #cat promotion.yaml | yq e '.environments.learning[].priority' - | sort -u
-        #3. For each priority
-        #Get clusters
-        #cat promotion.yaml| yq -I4 e '[.environments.learning.[] | select(.priority == "1")]' -
-        #All clusters:
-        #  submit workflow run:
-        #    gh workflow run cluster_deploy.yaml
-        #  Get run id: 
-        #    curl "https://api.github.com/repos/erzhan46/pr_test/actions/runs?per_page=1"
-        #  Check run completion:
-        #    curl "https://api.github.com/repos/erzhan46/pr_test/actions/runs/1262486783"
-        #  Once all run for priority completed
-        #    If at least one job failed - report and stop
+      - name: Environment deployment success
+        run: |
+          echo "Environment deployment successful"
+          git tag -a "${RELEASE_VERSION}-${DEPLOYMENT_ENVIRONMENT}-success" -m "Deployment success in ${DEPLOYMENT_ENVIRONMENT} environment" ${{ github.sha }}
+          git push origin "${RELEASE_VERSION}-${DEPLOYMENT_ENVIRONMENT}-success"
+
 
 
   context-debug:
