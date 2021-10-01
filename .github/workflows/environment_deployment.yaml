@@ -86,16 +86,23 @@ jobs:
           #git fetch --prune --tags origin
           #
       - name: Debug
+        id: debug
         run: |
           echo "Environment: ${DEPLOYMENT_ENVIRONMENT}"
           echo "Release version: ${RELEASE_VERSION}"
           echo "Code tag: ${CODE_TAG}"
           echo "Config tag: ${CONFIG_TAG}"
+          REPO_URL="${{ github.event.repository.tags_url }}"
+          REPO_URL=${REPO_URL%tags}
+          echo "Repo URL: ${REPO_URL}"
+          echo "::set-output name=repo_url::${REPO_URL}"
 
       - name: Get workflow ID
         id: get_workflow
+        env:
+          REPO_URL: ${{ steps.debug.outputs.repo_url }}
         run: |
-          WORKFLOW_ID=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/workflows" | jq -c '.workflows[] | select( .path | contains("'${CLUSTER_WORKFLOW}'")) | .id')
+          WORKFLOW_ID=$(curl -s "${REPO_URL}actions/workflows" -H "Authorization: token ${GITHUB_TOKEN}" | jq -c '.workflows[] | select( .path | contains("'${CLUSTER_WORKFLOW}'")) | .id')
           echo "Workflow Id: ${WORKFLOW_ID}"
           if [[ -z "${WORKFLOW_ID}" ]]; then
             echo "Could not find workflow ${CLUSTER_WORKFLOW} - Exiting"
@@ -107,6 +114,8 @@ jobs:
         id: clusters_deployment
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REPO_URL: ${{ steps.debug.outputs.repo_url }}
+          WORKFLOW_ID: ${{ steps.get_workflow.outputs.id }}
         continue-on-error: true
         run: |
           cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -un | while read PRIORITY
@@ -125,12 +134,11 @@ jobs:
               echo "Workspace: ${WORKSPACE}"
               echo "Tfvars file: ${TFVARS_FILE}"
               
-              WORKFLOW_ID=${{ steps.get_workflow.outputs.id }}
               curl -s -X POST -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${PAT_TOKEN}" \
-                  "https://api.github.com/repos/erzhan46/pr_test/actions/workflows/${WORKFLOW_ID}/dispatches" \
+                  "${REPO_URL}actions/workflows/${WORKFLOW_ID}/dispatches" \
                   -d '{"ref": "'"${{ github.ref }}"'","inputs": { "zone": "'"${ZONE}"'", "workspace": "'"${WORKSPACE}"'", "tfvars_file": "'"${TFVARS_FILE}"'", "release-version": "'"${RELEASE_VERSION}"'" }}'
               sleep 30 # Need timeout to let it process request - 5 seconds is not enough
-              RUN_ID=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs?per_page=1" -H "Authorization: token ${GITHUB_TOKEN}" | jq '.workflow_runs[].id')
+              RUN_ID=$(curl -s "${REPO_URL}actions/runs?per_page=1" -H "Authorization: token ${GITHUB_TOKEN}" | jq '.workflow_runs[].id')
               echo "Run ID: ${RUN_ID}"
               ID_ARR+=( ${ZONE} )
               RUN_ARR+=( ${RUN_ID} )
@@ -149,8 +157,8 @@ jobs:
                 ID=${ID_ARR[${ARR_I}]}
                 RUN=${RUN_ARR[${ARR_I}]}
                 echo "Checking id: ${ID} Run:${RUN}"
-                STATUS=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.status' | tr -d '"')
-                CONCLUSION=$(curl -s "https://api.github.com/repos/erzhan46/pr_test/actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.conclusion' | tr -d '"')
+                STATUS=$(curl -s "${REPO_URL}actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.status' | tr -d '"')
+                CONCLUSION=$(curl -s "${REPO_URL}actions/runs/${RUN}"  -H "Authorization: token ${GITHUB_TOKEN}" | jq '.conclusion' | tr -d '"')
                 if [[ ${STATUS} != "completed" ]]; then
                   DONE=false
                   echo "Still running"

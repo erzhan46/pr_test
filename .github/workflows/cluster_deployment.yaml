@@ -75,18 +75,18 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color
-        continue-on-error: true
+#      - name: Terraform Plan
+#        id: plan
+#        run: terraform plan -no-color
+#        continue-on-error: true
 
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: |
-          echo "Terraform plan failed - see 'plan' step above for more details"
-          git tag -a "${RELEASE_VERSION}-${ZONE}-failed" -m "Deployment start in learning environment" ${{ github.sha }}
-          git push origin "${RELEASE_VERSION}-${ZONE}-failed"
-          exit 1
+#      - name: Terraform Plan Status
+#        if: steps.plan.outcome == 'failure'
+#        run: |
+#          echo "Terraform plan failed - see 'plan' step above for more details"
+#          git tag -a "${RELEASE_VERSION}-${ZONE}-failed" -m "Deployment start in learning environment" ${{ github.sha }}
+#          git push origin "${RELEASE_VERSION}-${ZONE}-failed"
+#          exit 1
 
       - name: Terraform Apply
         id: apply

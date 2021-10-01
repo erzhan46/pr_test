@@ -1,4 +1,4 @@
-name: Environment deployment
+name: Environment promotion
 
 on:
   push:
@@ -98,6 +98,8 @@ jobs:
             PROMOTION_ENVIRONMENT="customer"
           fi
           if [[ ${DEPLOYMENT_ENVIRONMENT} == "customer" ]]; then
+            git tag -a "${RELEASE_VERSION}-success" -m "Deployment ${RELEASE_VERSION} is successful" ${{ github.sha }}
+            git push origin "${RELEASE_VERSION}-success"
             echo "Release deployment successful"
             exit 0
           fi
