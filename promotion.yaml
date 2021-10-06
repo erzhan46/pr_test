@@ -11,7 +11,7 @@ environments:
         vendor: aro
       - id: sut_test2
         zone: sut_test2
-        priority: 1
+        priority: 2
         workspace: sut_test2
         tfvars_file: config/sut/sut_test2.tfvars
         vendor: aro

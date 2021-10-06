@@ -206,13 +206,15 @@ jobs:
       
       - name: Tag for promotion start
         id: promotion_start
+        env:
+          PROMO_FILE: "promotion.yaml"
         run: |
           if [[ -n "${{ steps.tag_code_changes.outputs.release_version }}" || -n "${{ steps.tag_config_changes.outputs.release_version }}" ]]; then
             RELEASE_VERSION="${{ steps.tag_code_changes.outputs.release_version }}"
             if [[ -z "${RELEASE_VERSION}" ]]; then
               RELEASE_VERSION="${{ steps.tag_config_changes.outputs.release_version }}"
             fi
-            for ENVIRONMENT in $(cat promotion_new.yaml | yq e '[.environments[] | select(.priority == "1")] as $env | $env[].name' -)
+            for ENVIRONMENT in $(cat ${PROMO_FILE} | yq e '[.environments[] | select(.priority == "1")] as $env | $env[].name' -)
             do
               echo "Deployment start in the ${ENVIRONMENT} environment"
               git tag -a "${RELEASE_VERSION}-${ENVIRONMENT}-start" -m "Deployment start in the ${ENVIRONMENT} environment" ${{ github.sha }}
