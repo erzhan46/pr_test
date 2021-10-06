@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ssh-key: "${{ secrets.COMMIT_KEY }}"
+          token: "${{ secrets.YOB_PAT_TOKEN }}"
       - name: Get relevant tags
         id: get_tags
         run: |
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ssh-key: "${{ secrets.COMMIT_KEY }}"
+          token: "${{ secrets.YOB_PAT_TOKEN }}"
 
       - name: Git config
         run: |
@@ -113,7 +113,7 @@ jobs:
       - name: Clusters deployment
         id: clusters_deployment
         env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.YOB_PAT_TOKEN }}
           REPO_URL: ${{ steps.debug.outputs.repo_url }}
           WORKFLOW_ID: ${{ steps.get_workflow.outputs.id }}
         continue-on-error: true

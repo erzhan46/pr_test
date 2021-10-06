@@ -1,10 +1,12 @@
 name: Pull request create or resync
 
+
 on:
   pull_request:
     branches:
       - main
     types: [opened, synchronize, reopened]
+
 
 jobs:
   commit_validation:
@@ -15,14 +17,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
       - run: |
           git fetch --prune --tags origin 
+
       - name: Get commits in PR
         id: get_commits
         run: |
-          which jq
-          which yq
-          echo "token: ${GITHUB_TOKEN}"
           curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].commit.message'
           COMMIT_LIST=$(curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].sha')
           COMMIT_LIST="${COMMIT_LIST//'%'/'%25'}"
@@ -31,11 +32,13 @@ jobs:
           echo "::set-output name=commits::${COMMIT_LIST}"
         env:
           COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
+
       - name: Get code version tag in scope of PR (latest/if any)
         id: get_latest_code_tag
         run: |
           TAGS=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 2>/dev/null || true; done)
           echo "::set-output name=latest_code_tag::${TAGS}"
+
       - name: Get changed files
         id: get_changed_files
         run: |
@@ -46,15 +49,22 @@ jobs:
           DIFF="${DIFF//$'\n'/'%0A'}"
           DIFF="${DIFF//$'\r'/'%0D'}"
           echo "::set-output name=files::${DIFF}"
+
       - name: Files scope
         id: files_scope
         run: |
-          CODE_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/*" || true; done)
+          CODE_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/.*\.tf$" || true; done)
           echo "Code files:${CODE_FILES}"
           CODE_FILES="${CODE_FILES//'%'/'%25'}"
           CODE_FILES="${CODE_FILES//$'\n'/'%0A'}"
           CODE_FILES="${CODE_FILES//$'\r'/'%0D'}"
           echo "::set-output name=code_files::${CODE_FILES}"
+          VERSION_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/version.json" || true; done)
+          echo "Code files:${VERSION_FILES}"
+          VERSION_FILES="${VERSION_FILES//'%'/'%25'}"
+          VERSION_FILES="${VERSION_FILES//$'\n'/'%0A'}"
+          VERSION_FILES="${VERSION_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=version_files::${VERSION_FILES}"
           CONF_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^config\/*" || true; done)
           echo "Configuration files:${CONF_FILES}"
           CONF_FILES="${CONF_FILES//'%'/'%25'}"
@@ -67,24 +77,66 @@ jobs:
           WORKFLOW_FILES="${WORKFLOW_FILES//$'\n'/'%0A'}"
           WORKFLOW_FILES="${WORKFLOW_FILES//$'\r'/'%0D'}"
           echo "::set-output name=workflow_files::${WORKFLOW_FILES}"
-      - run: |
-          echo "latest code tag in current PR"
-          echo ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}
-          echo "latest code tag overall"
-          git describe --tags --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo ""
-          echo "latest release tag overall"
-          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' $(git rev-list --tags='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --max-count=1) 2>/dev/null || echo ""
-      - name: Check code version tag presense
+
+      - name: Tags overall
+        id: tags
         run: |
-          if [[ -n "${{ steps.files_scope.outputs.code_files }}" && -z "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
-            echo "Pull request should contain at least one commit with the version tag if code files are changed"
+          echo "latest code tag in current PR: ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
+          LATEST_CODE_TAG=$(git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo "")
+          echo "latest code tag overall:       ${LATEST_CODE_TAG}"
+          echo "::set-output name=latest_code_tag_overall::${LATEST_CODE_TAG}"
+          LATEST_RELEASE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' $(git rev-list --tags='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --max-count=1) 2>/dev/null || echo "")
+          echo "latest release tag overall:    ${LATEST_RELEASE_TAG}"
+          echo "::set-output name=latest_release_tag_overall::${LATEST_RELEASE_TAG}"
+
+      - name: Check code version file presense
+        id: version_file
+        run: |
+          if [[ -n "${{ steps.files_scope.outputs.code_files }}" ]]; then
+            if [[ -z "${{ steps.files_scope.outputs.version_files }}" ]]; then
+              echo "Pull request should updates to the version.json file if code files are changed"
+              echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
+              exit 1
+            fi
+            MAJOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major'} 
+            MINOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor'} 
+            PATCH=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch'} 
+            CODE_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            echo "Code version file presense check passed"
             echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
-            exit 1
-          else
-            echo "Code version tag presense check passed"
-            echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
-            echo "Code version: ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
+            echo "Code version: ${CODE_VERSION}"
+            echo "::set-output name=code_version::${CODE_VERSION}"
           fi
+
+      - name: Validate code version number
+        id: validate_code_version
+        run: |
+          if [[ -n "${{ steps.files_scope.outputs.code_files }}" ]]; then
+            if [[ -n "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
+              if [[ "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" != "${{ steps.version_file.output.code_version }}" ]]; then
+                echo "Pull request commit already tagged with code version and it does not match code version in version.json - exiting"
+                echo "Pull request commit tag:      ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
+                echo "Code version in version.json: ${{ steps.version_file.  output.code_version }}"
+                echo "Pull request commit code version commit tagging is no longer required - use version.json to track code version"
+                exit 1
+              fi
+            else
+              LATEST_CODE_TAG="${{ steps.tags.output.latest_code_tag_overall }}"
+              CODE_VERSION="${{ steps.version_file.output.code_version }}"
+              LATEST_CODE_TAG=${LATEST_CODE_TAG#v}
+              CODE_VERSION=${CODE_VERSION#v}
+              ARR_LATEST_CODE_TAG=(${LATEST_CODE_TAG//./ })
+              ARR_CODE_VERSION=(${CODE_VERSION//./ })
+              CMP_RESULT=$(for ARR_ID in ${!ARR_CODE_VERSION[@]}; do NUM1=${ARR_LATEST_CODE_TAG[${ARR_ID}]}; NUM2=${ARR_CODE_VERSION[${ARR_ID}]}; if [[ ${NUM1} -gt ${NUM2} ]]; then echo 1; break; fi; if [[ ${NUM1} -lt ${NUM2} ]]; then echo -1; break; fi; done)
+              if [[ -z "${CMP_RESULT}" || ${CMP_RESULT} == "1" ]]; then
+                echo "Code version in version.json file should be greater than latest code version in the repository"
+                echo "Code version in version.json:       ${CODE_VERSION}"
+                echo "Code version tag in the repository: ${LATEST_CODE_TAG}"
+                exit 1
+              fi
+            fi
+          fi
+
       - name: Check that github workflow changes are separate from code/configuration
         run: |
           if [[ ( -n "${{ steps.files_scope.outputs.code_files }}" || -n "${{ steps.files_scope.outputs.conf_files }}" ) && -n "${{ steps.files_scope.outputs.workflow_files }}" ]]; then
@@ -107,8 +159,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 250
+
       - run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+
       - name: Get changed files
         id: file_changes
         run: |
@@ -116,9 +170,11 @@ jobs:
           echo "Diff between ${{ github.base_ref }} and ${{ github.sha }}"
           echo "$DIFF"
           echo "::set-output name=files::$( echo "$DIFF" | xargs echo )"    
+
       - uses: actions/setup-python@v2
         with:
           python-version: "3.9"
+
       - name: Run pre-commit
         uses: pre-commit/action@v2.0.0
         env:
@@ -127,6 +183,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           extra_args: --color=always --show-diff-on-failure --files ${{ steps.file_changes.outputs.files }}
         
+
   context-debug:
     runs-on: ubuntu-latest
     steps:

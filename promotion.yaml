@@ -1,22 +1,24 @@
 environments:
+  sut:
+    - id: sut_test1
+      zone: sut_test1
+      priority: 1
+      workspace: sut_test1
+      tfvars_file: config/sut/sut_test1.tfvars
+      vendor: aro
+  internal_management:
+    - id: intmgmt_test1
+      zone: intmgmt_test1
+      priority: 1
+      workspace: intmgmt_test1
+      tfvars_file: config/internal_management/intmgmt_test1.tfvars
+      vendor: aro
   learning:
-    - id: pr_test
-      zone: learn_eastus01
+    - id: learn_test1
+      zone: learn_test1
       priority: 1
-      workspace: pr_test
-      tfvars_file: config/learning/pr_test.tfvars
-      vendor: aro
-    - id: pr_test2
-      zone: learn_eastus02
-      priority: 1
-      workspace: pr_test2
-      tfvars_file: config/learning/pr_test2.tfvars
-      vendor: aro
-    - id: pr_test3
-      zone: learn_westus01
-      priority: 2
-      workspace: pr_test3
-      tfvars_file: config/learning/pr_test3.tfvars
+      workspace: learn_test1
+      tfvars_file: config/learning/learn_test1.tfvars
       vendor: aro
   engineering:
     - id: eng_test1
@@ -31,4 +33,11 @@ environments:
       priority: 1
       workspace: cust_test1
       tfvars_file: config/customer/cust_test1.tfvars
+      vendor: aro
+  platform_management:
+    - id: platmgmt_test1
+      zone: platmgmt_test1
+      priority: 1
+      workspace: platmgmt_test1
+      tfvars_file: config/internal_management/platmgmt_test1.tfvars
       vendor: aro
