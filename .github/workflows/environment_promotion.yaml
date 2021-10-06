@@ -3,9 +3,13 @@ name: Environment promotion
 on:
   push:
     tags:
+      - 'release-*-sut-success'
       - 'release-*-learning-success'
       - 'release-*-engineering-success'
       - 'release-*-customer-success'
+      - 'release-*-internal_management-success'
+      - 'release-*-platform_management-success'
+
 
 jobs:
 
@@ -18,11 +22,13 @@ jobs:
       release_tag: ${{ steps.get_tags.outputs.release_tag }}
       code_tag: ${{ steps.get_tags.outputs.code_tag }}
       config_tag: ${{ steps.get_tags.outputs.config_tag }}
+      promote:  ${{ steps.check_promotions.outputs.promote }}
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
           token: "${{ secrets.YOB_PAT_TOKEN }}"
+
       - name: Get relevant tags
         id: get_tags
         run: |
@@ -43,6 +49,7 @@ jobs:
           echo "::set-output name=release_tag::${RELEASE_TAG}"
           echo "::set-output name=code_tag::${CODE_TAG}"
           echo "::set-output name=config_tag::${CONFIG_TAG}"
+
       - name: Identify environment
         id: get_environment
         run: |
@@ -56,10 +63,38 @@ jobs:
           fi
           echo "::set-output name=environment::${ENVIRONMENT}"
 
+      - name: Check all current promotions
+        id: check_promotions
+        env:
+          ENVIRONMENT: ${{ steps.get_environment.outputs.environment }}
+          PROMO_FILE: "promotion.yaml"
+        run: |
+          PRIORITY=$(cat ${PROMO_FILE} | yq e '[.environments[] | select(.name == "'${ENVIRONMENT}'")] as $env | $env[].priority' -)
+          REF=${{ github.ref }}
+          REF=${REF#refs\/tags\/}
+          REF=${REF%-*}
+          REF=${REF%-*}
+          COMPLETE=true
+          for ENVS in $(cat ${PROMO_FILE} | yq e '[.environments[] | select(.priority == "'${PRIORITY}'")] as $env | $env[].name' -)
+          do
+            TAG="${REF}-${ENVS}-success"
+            CHECK=$(git describe --tags --match="${TAG}*" --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
+            if [[ -z "${CHECK}" ]]; then
+              COMPLETE=false
+            fi
+          done
+          if [[ ${COMPLETE} == true ]]; then
+            echo "::set-output name=promote::yes"
+          else
+            echo "::set-output name=promote::no"
+          fi
+
+
 
   promote_environment:
     runs-on: ubuntu-latest
     needs: identify_environment
+    if: needs.identify_environment.outputs.promote == 'yes'
     defaults:
       run:
         shell: bash
@@ -79,8 +114,6 @@ jobs:
         run: |
           git config --global user.email "infra-pipeline@dh.com"
           git config --global user.name "Infrastructure Pipeline"
-          #      - run: |
-          #git fetch --prune --tags origin
           
       - name: Debug
         run: |
