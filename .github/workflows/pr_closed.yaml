@@ -6,6 +6,7 @@ on:
       - main
     types: [closed]
 
+
 jobs:
   rejected:
     if: github.event.pull_request.merged != true
@@ -14,6 +15,7 @@ jobs:
     # PR rejected - notify
       - run: |
           echo "PR rejected"
+
 
   merge-validation:
     if: github.event.pull_request.merged == true
@@ -24,15 +26,19 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ssh-key: "${{ secrets.COMMIT_KEY }}"
+          token: "${{ secrets.YOB_PAT_TOKEN }}"
+
       - name: Git config
         run: |
           git config --global user.email "infra-pipeline@dh.com"
           git config --global user.name "Infrastructure Pipeline"
+
       - run: |
           echo "PR merged"
+
       - run: |
           git fetch --prune --tags origin
+
       - name: Get commits in PR
         id: get_commits
         run: |
@@ -44,13 +50,11 @@ jobs:
           echo "::set-output name=commits::${COMMIT_LIST}"
         env:
           COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
-      - name: Get code version tag in scope of PR (latest/if any)
-        id: get_latest_code_tag
-        run: |
-          TAGS=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 2>/dev/null ||   true; done)
-          echo "::set-output name=latest_code_tag::${TAGS}"
+
       - name: Get changed files
         id: get_changed_files
+        env:
+          COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
         run: |
           ARR=($(curl -s ${COMMIT_URL} -H "Authorization: token ${GITHUB_TOKEN}" | jq '.[].sha'))
           FIRST_SHA=$(echo ${ARR[0]} | tr -d '"')
@@ -63,8 +67,7 @@ jobs:
           DIFF="${DIFF//$'\n'/'%0A'}"
           DIFF="${DIFF//$'\r'/'%0D'}"
           echo "::set-output name=files::${DIFF}"
-        env:
-          COMMIT_URL: "${{ github.event.pull_request._links.commits.href }}?per_page=250"
+
       - name: Files scope
         id: files_scope
         run: |
@@ -74,6 +77,12 @@ jobs:
           CODE_FILES="${CODE_FILES//$'\n'/'%0A'}"
           CODE_FILES="${CODE_FILES//$'\r'/'%0D'}"
           echo "::set-output name=code_files::${CODE_FILES}"
+          VERSION_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/version.json" || true; done)
+          echo "Code files:${VERSION_FILES}"
+          VERSION_FILES="${VERSION_FILES//'%'/'%25'}"
+          VERSION_FILES="${VERSION_FILES//$'\n'/'%0A'}"
+          VERSION_FILES="${VERSION_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=version_files::${VERSION_FILES}"
           CONF_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^config\/*" || true; done)
           echo "Configuration files:${CONF_FILES}"
           CONF_FILES="${CONF_FILES//'%'/'%25'}"
@@ -86,13 +95,34 @@ jobs:
           WORKFLOW_FILES="${WORKFLOW_FILES//$'\n'/'%0A'}"
           WORKFLOW_FILES="${WORKFLOW_FILES//$'\r'/'%0D'}"
           echo "::set-output name=workflow_files::${WORKFLOW_FILES}"
-      - run: |
-          echo "latest code tag in current PR"
-          echo ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}
-          echo "latest code tag overall"
-          git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null || echo ""
-          echo "latest release tag overall"
-          git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' $(git rev-list --tags='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --max-count=1) 2>/dev/null || echo ""
+
+      - name: Get code version tag in scope of PR (latest/if any)
+        id: get_latest_code_tag
+        run: |
+          CODE_VERSION_TAG=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 2>/dev/null ||   true; done)
+          if [[ -z "${CODE_VERSION_TAG}" ]]; then
+            MAJOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major'}
+            MINOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor'}
+            PATCH=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch'}
+            CODE_VERSION_FILE="v${MAJOR}.${MINOR}.${PATCH}"
+            echo "Tagging merge commit with code version: ${CODE_VERSION_FILE}"
+            git tag -a "${CODE_VERSION_FILE}" -m "Deployment release ${CODE_VERSION_FILE}" ${{ github.sha }}
+            git push origin "${CODE_VERSION_FILE}"
+            CODE_VERSION_TAG="${CODE_VERSION_FILE}"
+          fi
+          echo "::set-output name=latest_code_tag::${CODE_VERSION_TAG}"
+
+      - name: Tags overall
+        id: tags
+        run: |
+          echo "latest code tag in current PR: ${{ steps.get_latest_code_tag.outputs.latest_code_tag }}"
+          LATEST_CODE_TAG=$(git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" $(git rev-list --tags="v[0-9]*\.[0-9]*\.[0-9]*" --max-count=1) 2>/dev/null ||   echo "")
+          echo "latest code tag overall:       ${LATEST_CODE_TAG}"
+          echo "::set-output name=latest_code_tag_overall::${LATEST_CODE_TAG}"
+          LATEST_RELEASE_TAG=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' $(git rev-list --tags='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --max-count=1) 2>/dev/null || echo "")
+          echo "latest release tag overall:    ${LATEST_RELEASE_TAG}"
+          echo "::set-output name=latest_release_tag_overall::${LATEST_RELEASE_TAG}"
+
       - name: Tag Code changes
         id: tag_code_changes
         run: |
@@ -112,13 +142,14 @@ jobs:
               echo "::set-output name=release_version::${RELEASE_VERSION}"
             fi
           fi
+
       - name: Tag configuration changes
         id: tag_config_changes
         run: |
           if [[ -n "${{ steps.files_scope.outputs.conf_files }}" ]]; then
             RELEASE_VERSION="${{ steps.tag_code_changes.outputs.release_version }}"
             if [[ -z "${RELEASE_VERSION}" ]]; then
-              RELEASE_VERSION=$(git describe --tags --match='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' $(git rev-list --tags='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*' --exclude='release-[0-9]*\.[0-9]*\.[0-9]*\.[0-9]*-*' --max-count=1) 2>/dev/null || echo "")
+              RELEASE_VERSION="${{ steps.tags.outputs.latest_release_tag_overall }}"
               if [[ -z "${RELEASE_VERSION}" ]]; then
                 RELEASE_VERSION="release-0.0.0"
               else
@@ -139,6 +170,7 @@ jobs:
           fi
         # Need logic to check for environment targeted deployment
         # Logic for manual deployment tag move to merge? 
+      
       - name: Tag for promotion start
         id: promotion_start
         run: |
