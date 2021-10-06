@@ -123,7 +123,7 @@ jobs:
         id: version_file
         run: |
           if [[ "${{ steps.files_scope.outputs.code_present }}" == "yes" ]]; then
-            if [[ "${{ steps.files_scope.outputs.version_present }}" !== "yes" ]]; then
+            if [[ "${{ steps.files_scope.outputs.version_present }}" != "yes" ]]; then
               echo "Pull request should updates to the version.json file if code files are changed"
               echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
               exit 1
