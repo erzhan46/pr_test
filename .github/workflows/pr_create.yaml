@@ -59,24 +59,54 @@ jobs:
           CODE_FILES="${CODE_FILES//$'\n'/'%0A'}"
           CODE_FILES="${CODE_FILES//$'\r'/'%0D'}"
           echo "::set-output name=code_files::${CODE_FILES}"
+          if [[ -n "${CODE_FILES}" ]]; then
+            echo "::set-output name=code_present::yes"
+          fi
           VERSION_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/version.json" || true; done)
           echo "Code files:${VERSION_FILES}"
           VERSION_FILES="${VERSION_FILES//'%'/'%25'}"
           VERSION_FILES="${VERSION_FILES//$'\n'/'%0A'}"
           VERSION_FILES="${VERSION_FILES//$'\r'/'%0D'}"
           echo "::set-output name=version_files::${VERSION_FILES}"
+          if [[ -n "${VERSION_FILES}" ]]; then
+            echo "::set-output name=version_present::yes"
+          fi
           CONF_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^config\/*" || true; done)
           echo "Configuration files:${CONF_FILES}"
           CONF_FILES="${CONF_FILES//'%'/'%25'}"
           CONF_FILES="${CONF_FILES//$'\n'/'%0A'}"
           CONF_FILES="${CONF_FILES//$'\r'/'%0D'}"
           echo "::set-output name=conf_files::${CONF_FILES}"
+          if [[ -n "${CONF_FILES}" ]]; then
+            echo "::set-output name=conf_present::yes"
+          fi
+          PROMO_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^promotion.yaml$" || true; done)
+          echo "Promotion file:${PROMO_FILES}"
+          PROMO_FILES="${PROMO_FILES//'%'/'%25'}"
+          PROMO_FILES="${PROMO_FILES//$'\n'/'%0A'}"
+          PROMO_FILES="${PROMO_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=promo_files::${PROMO_FILES}"
+          if [[ -n "${PROMO_FILES}" ]]; then
+            echo "::set-output name=promo_present::yes"
+          fi
+          MODULES_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^modules\/*" || true; done)
+          echo "Modules files:${MODULES_FILES}"
+          MODULES_FILES="${MODULES_FILES//'%'/'%25'}"
+          MODULES_FILES="${MODULES_FILES//$'\n'/'%0A'}"
+          MODULES_FILES="${MODULES_FILES//$'\r'/'%0D'}"
+          echo "::set-output name=modules_files::${MODULES_FILES}"
+          if [[ -n "${MODULES_FILES}" ]]; then
+            echo "::set-output name=modules_present::yes"
+          fi
           WORKFLOW_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^\.github\/workflows\/*" || true; done)
           echo "Workflow files:${WORKFLOW_FILES}"
           WORKFLOW_FILES="${WORKFLOW_FILES//'%'/'%25'}"
           WORKFLOW_FILES="${WORKFLOW_FILES//$'\n'/'%0A'}"
           WORKFLOW_FILES="${WORKFLOW_FILES//$'\r'/'%0D'}"
           echo "::set-output name=workflow_files::${WORKFLOW_FILES}"
+          if [[ -n "${WORKFLOW_FILES}" ]]; then
+            echo "::set-output name=workflow_present::yes"
+          fi
 
       - name: Tags overall
         id: tags
@@ -92,8 +122,8 @@ jobs:
       - name: Check code version file presense
         id: version_file
         run: |
-          if [[ -n "${{ steps.files_scope.outputs.code_files }}" ]]; then
-            if [[ -z "${{ steps.files_scope.outputs.version_files }}" ]]; then
+          if [[ "${{ steps.files_scope.outputs.code_present }}" == "yes" ]]; then
+            if [[ "${{ steps.files_scope.outputs.version_present }}" != "yes" ]]; then
               echo "Pull request should updates to the version.json file if code files are changed"
               echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
               exit 1
@@ -111,7 +141,7 @@ jobs:
       - name: Validate code version number
         id: validate_code_version
         run: |
-          if [[ -n "${{ steps.files_scope.outputs.code_files }}" ]]; then
+          if [[ "${{ steps.files_scope.outputs.code_present }}" == "yes" ]]; then
             if [[ -n "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" ]]; then
               if [[ "${{ steps.get_latest_code_tag.outputs.latest_code_tag }}" != "${{ steps.version_file.output.code_version }}" ]]; then
                 echo "Pull request commit already tagged with code version and it does not match code version in version.json - exiting"
@@ -139,16 +169,20 @@ jobs:
 
       - name: Check that github workflow changes are separate from code/configuration
         run: |
-          if [[ ( -n "${{ steps.files_scope.outputs.code_files }}" || -n "${{ steps.files_scope.outputs.conf_files }}" ) && -n "${{ steps.files_scope.outputs.workflow_files }}" ]]; then
+          if [[ ( "${{ steps.files_scope.outputs.code_present }}" == "yes" || "${{ steps.files_scope.outputs.conf_present }}" == "yes" || "${{ steps.files_scope.outputs.modules_present }}" == "yes" || "${{ steps.files_scope.outputs.promo_present }}" == "yes" ) && "${{ steps.files_scope.outputs.workflow_present }}" == "yes" ]]; then
             echo "Pull request should not contain workflow modifications together with code/configuration modifications"
             echo "Code files changed: ${{ steps.files_scope.outputs.code_files }}"
+            echo "Modules files changed: ${{ steps.files_cope.outputs.modules_files }}"
             echo "Configuration files changed: ${{ steps.files_scope.outputs.conf_files }}"
+            echo "Promotion file changed: ${{ steps.files_scope.outputs.promo_files }}"
             echo "Workflow files changed: ${{ steps.files_scope.outputs.workflow_files }}"
             exit 1
           else
             echo "Workflow separation check passed"
             echo "Code files changed: ${{ steps.files_scope.outputs.code_files }}"
+            echo "Modules files changed: ${{ steps.files_cope.outputs.modules_files }}"
             echo "Configuration files changed: ${{ steps.files_scope.outputs.conf_files }}"
+            echo "Promotion file changed: ${{ steps.files_scope.outputs.promo_files }}"
             echo "Workflow files changed: ${{ steps.files_scope.outputs.workflow_files }}"
           fi
 
