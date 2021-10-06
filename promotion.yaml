@@ -1,43 +1,73 @@
 environments:
-  sut:
-    - id: sut_test1
-      zone: sut_test1
-      priority: 1
-      workspace: sut_test1
-      tfvars_file: config/sut/sut_test1.tfvars
-      vendor: aro
-  internal_management:
-    - id: intmgmt_test1
-      zone: intmgmt_test1
-      priority: 1
-      workspace: intmgmt_test1
-      tfvars_file: config/internal_management/intmgmt_test1.tfvars
-      vendor: aro
-  learning:
-    - id: learn_test1
-      zone: learn_test1
-      priority: 1
-      workspace: learn_test1
-      tfvars_file: config/learning/learn_test1.tfvars
-      vendor: aro
-  engineering:
-    - id: eng_test1
-      zone: eng_eastus01
-      priority: 1
-      workspace: eng_test1
-      tfvars_file: config/engineering/eng_test1.tfvars
-      vendor: aro
-  customer:
-    - id: cust_test1
-      zone: cust_eastus01
-      priority: 1
-      workspace: cust_test1
-      tfvars_file: config/customer/cust_test1.tfvars
-      vendor: aro
-  platform_management:
-    - id: platmgmt_test1
-      zone: platmgmt_test1
-      priority: 1
-      workspace: platmgmt_test1
-      tfvars_file: config/internal_management/platmgmt_test1.tfvars
-      vendor: aro
+  - name: sut
+    priority: 1
+    enabled: true
+    clusters:
+      - id: sut_test1
+        zone: sut_test1
+        priority: 1
+        workspace: sut_test1
+        tfvars_file: config/sut/sut_test1.tfvars
+        vendor: aro
+      - id: sut_test2
+        zone: sut_test2
+        priority: 1
+        workspace: sut_test2
+        tfvars_file: config/sut/sut_test2.tfvars
+        vendor: aro
+      - id: sut_test3
+        zone: sut_test3
+        priority: 2
+        workspace: sut_test3
+        tfvars_file: config/sut/sut_test3.tfvars
+        vendor: aro
+  - name: internal_management
+    priority: 1
+    enabled: true
+    clusters:
+      - id: intmgmt_test1
+        zone: intmgmt_test1
+        priority: 1
+        workspace: intmgmt_test1
+        tfvars_file: config/internal_management/intmgmt_test1.tfvars
+        vendor: aro
+  - name: learning
+    priority: 2
+    enabled: true
+    clusters:
+      - id: learn_test1
+        zone: learn_test1
+        priority: 1
+        workspace: learn_test1
+        tfvars_file: config/learning/learn_test1.tfvars
+        vendor: aro
+  - name: engineering
+    priority: 3
+    enabled: true
+    clusters:
+      - id: eng_test1
+        zone: eng_eastus01
+        priority: 1
+        workspace: eng_test1
+        tfvars_file: config/engineering/eng_test1.tfvars
+        vendor: aro
+  - name: platform_management
+    priority: 3
+    enabled: true
+    clusters:
+      - id: platmgmt_test1
+        zone: platmgmt_test1
+        priority: 1
+        workspace: platmgmt_test1
+        tfvars_file: config/internal_management/platmgmt_test1.tfvars
+        vendor: aro
+  - name: customer
+    priority: 4
+    enabled: true
+    clusters:
+      - id: cust_test1
+        zone: cust_eastus01
+        priority: 1
+        workspace: cust_test1
+        tfvars_file: config/customer/cust_test1.tfvars
+        vendor: aro

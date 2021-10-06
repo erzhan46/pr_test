@@ -3,9 +3,13 @@ name: Environment deployment
 on:
   push:
     tags:
+      - 'release-*-sut-start'
       - 'release-*-learning-start'
       - 'release-*-engineering-start'
       - 'release-*-customer-start'
+      - 'release-*-internal_management-start'
+      - 'release-*-platform_management-start'
+
 
 jobs:
 
@@ -23,6 +27,7 @@ jobs:
         with:
           fetch-depth: 0
           token: "${{ secrets.YOB_PAT_TOKEN }}"
+
       - name: Get relevant tags
         id: get_tags
         run: |
@@ -43,6 +48,7 @@ jobs:
           echo "::set-output name=release_tag::${RELEASE_TAG}"
           echo "::set-output name=code_tag::${CODE_TAG}"
           echo "::set-output name=config_tag::${CONFIG_TAG}"
+
       - name: Identify environment
         id: get_environment
         run: |
@@ -70,6 +76,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.identify_environment.outputs.release_tag }}
       CODE_TAG: ${{ needs.identify_environment.outputs.code_tag }}
       CONFIG_TAG: ${{ needs.identify_environment.outputs.config_tag }}
+      PROMO_FILE: "promotion.yaml"
     environment: ${{ needs.identify_environment.outputs.environment }}
     concurrency: ${{ needs.identify_environment.outputs.environment }}
     steps:
@@ -82,9 +89,7 @@ jobs:
         run: |
           git config --global user.email "infra-pipeline@dh.com"
           git config --global user.name "Infrastructure Pipeline"
-          #      - run: |
-          #git fetch --prune --tags origin
-          #
+          
       - name: Debug
         id: debug
         run: |
@@ -118,17 +123,17 @@ jobs:
           WORKFLOW_ID: ${{ steps.get_workflow.outputs.id }}
         continue-on-error: true
         run: |
-          cat promotion.yaml | yq e '.environments.'${DEPLOYMENT_ENVIRONMENT}'[].priority' - | sort -un | while read PRIORITY
+          cat ${PROMO_FILE} | yq e '[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[].priority' - | sort -un | while read PRIORITY
           do
             echo "Processing priority ${PRIORITY} clusters"
             ID_ARR=()
             RUN_ARR=()
             # Submitting workflow runs for each cluster
-            for CLUSTERID in $(cat promotion.yaml| yq  e '[.environments.'${DEPLOYMENT_ENVIRONMENT}'.[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' -)
+            for CLUSTERID in $(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == ""'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' -)
             do
-              ZONE=$(cat promotion.yaml| yq  e '.environments.'${DEPLOYMENT_ENVIRONMENT}'.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.zone' -)
-              WORKSPACE=$(cat promotion.yaml| yq  e '.environments.'${DEPLOYMENT_ENVIRONMENT}'.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.workspace' -)
-              TFVARS_FILE=$(cat promotion.yaml| yq  e '.environments.'${DEPLOYMENT_ENVIRONMENT}'.[] | select(.id == "'${CLUSTERID}'") as $cluster | $cluster.tfvars_file' -)
+              ZONE=$(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.id == "'${CLUSTERID}'")] as $clusters | $clusters[].zone' -)
+              WORKSPACE=$(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.id == "'${CLUSTERID}'")] as $clusters | $clusters[].workspace' -)
+              TFVARS_FILE=$(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.id == "'${CLUSTERID}'")] as $clusters | $clusters[].tfvars_file' -)
               echo "Cluster Id: ${CLUSTERID}"
               echo "Zone: ${ZONE}"
               echo "Workspace: ${WORKSPACE}"

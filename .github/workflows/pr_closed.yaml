@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ github.token }}
+      PROMO_FILE: "promotion.yaml"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -81,7 +82,7 @@ jobs:
             echo "::set-output name=code_present::yes"
           fi
           VERSION_FILES=$(echo "${{ steps.get_changed_files.outputs.files }}" | while read FILE; do echo ${FILE}|grep "^code\/version.json" || true; done)
-          echo "Code files:${VERSION_FILES}"
+          echo "Version file:${VERSION_FILES}"
           VERSION_FILES="${VERSION_FILES//'%'/'%25'}"
           VERSION_FILES="${VERSION_FILES//$'\n'/'%0A'}"
           VERSION_FILES="${VERSION_FILES//$'\r'/'%0D'}"
@@ -211,8 +212,12 @@ jobs:
             if [[ -z "${RELEASE_VERSION}" ]]; then
               RELEASE_VERSION="${{ steps.tag_config_changes.outputs.release_version }}"
             fi
-            git tag -a "${RELEASE_VERSION}-learning-start" -m "Deployment start in the learning environment" ${{ github.sha }}
-            git push origin "${RELEASE_VERSION}-learning-start"
+            for ENVIRONMENT in $(cat promotion_new.yaml | yq e '[.environments[] | select(.priority == "1")] as $env | $env[].name' -)
+            do
+              echo "Deployment start in the ${ENVIRONMENT} environment"
+              git tag -a "${RELEASE_VERSION}-${ENVIRONMENT}-start" -m "Deployment start in the ${ENVIRONMENT} environment" ${{ github.sha }}
+              git push origin "${RELEASE_VERSION}-${ENVIRONMENT}-start"
+            done
           fi
 
 
