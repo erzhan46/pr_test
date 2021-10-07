@@ -51,7 +51,7 @@ environments:
         tfvars_file: config/engineering/eng_test2.tfvars
         vendor: aro
       - id: eng_test2
-        zone: eng_eastus03
+        zone: eng_westus03
         priority: 3
         enabled: true
         workspace: eng_test3

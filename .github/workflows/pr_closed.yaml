@@ -133,9 +133,9 @@ jobs:
           CODE_VERSION_TAG=$(echo "${{ steps.get_commits.outputs.commits }}" | while read COMMIT; do git describe --tags --match="v[0-9]*\.[0-9]*\.[0-9]*" --exact-match  ${COMMIT} 2>/dev/null ||   true; done)
           if [[ -z "${CODE_VERSION_TAG}" ]]; then
             if [[ -n "${{ steps.files_scope.outputs.version_files }}" ]]; then
-              MAJOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major'}
-              MINOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor'}
-              PATCH=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch'}
+              MAJOR=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major')
+              MINOR=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor')
+              PATCH=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch')
               CODE_VERSION_FILE="v${MAJOR}.${MINOR}.${PATCH}"
               echo "Tagging merge commit with code version: ${CODE_VERSION_FILE}"
               git tag -a "${CODE_VERSION_FILE}" -m "Deployment release ${CODE_VERSION_FILE}" ${{ github.sha }}
