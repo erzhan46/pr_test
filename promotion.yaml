@@ -50,7 +50,7 @@ environments:
         workspace: eng_test2
         tfvars_file: config/engineering/eng_test2.tfvars
         vendor: aro
-      - id: eng_test2
+      - id: eng_test3
         zone: eng_westus03
         priority: 3
         enabled: true
@@ -66,7 +66,7 @@ environments:
         priority: 1
         enabled: true
         workspace: platmgmt_test1
-        tfvars_file: config/internal_management/platmgmt_test1.tfvars
+        tfvars_file: config/platform_management/platmgmt_test1.tfvars
         vendor: aro
   - name: customer
     priority: 4
