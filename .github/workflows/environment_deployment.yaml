@@ -148,6 +148,7 @@ jobs:
                   "${REPO_URL}actions/workflows/${WORKFLOW_ID}/dispatches" \
                   -d '{"ref": "'"${{ github.ref }}"'","inputs": { "zone": "'"${ZONE}"'", "workspace": "'"${WORKSPACE}"'", "tfvars_file": "'"${TFVARS_FILE}"'", "release-version": "'"${RELEASE_VERSION}"'" }}'
               sleep 30 # Need timeout to let it process request - 5 seconds is not enough
+              curl -s "${REPO_URL}actions/runs?per_page=2" -H "Authorization: token ${GITHUB_TOKEN}" 
               RUN_ID=$(curl -s "${REPO_URL}actions/runs?per_page=20" -H "Authorization: token ${GITHUB_TOKEN}" | jq -c '.workflow_runs[] | select( .head_branch == "'${REF}'" and .workflow_id == '${WORKFLOW_ID}') | .id' | head -1)
               echo "Run ID: ${RUN_ID}"
               ID_ARR+=( ${ZONE} )
