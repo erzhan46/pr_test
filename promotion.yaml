@@ -39,7 +39,7 @@ environments:
       - id: eng_test1
         zone: eng_eastus01
         priority: 1
-        enabled: false
+        enabled: true
         workspace: eng_test1
         tfvars_file: config/engineering/eng_test1.tfvars
         vendor: aro
