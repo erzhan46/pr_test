@@ -10,20 +10,6 @@ environments:
         workspace: sut_test1
         tfvars_file: config/sut/sut_test1.tfvars
         vendor: aro
-      - id: sut_test2
-        zone: sut_test2
-        priority: 1
-        enabled: true
-        workspace: sut_test2
-        tfvars_file: config/sut/sut_test2.tfvars
-        vendor: aro
-      - id: sut_test3
-        zone: sut_test3
-        priority: 2
-        enabled: true
-        workspace: sut_test3
-        tfvars_file: config/sut/sut_test3.tfvars
-        vendor: aro
   - name: internal_management
     priority: 1
     enabled: true
@@ -37,7 +23,7 @@ environments:
         vendor: aro
   - name: learning
     priority: 2
-    enabled: true
+    enabled: false
     clusters:
       - id: learn_test1
         zone: learn_test1
@@ -53,9 +39,23 @@ environments:
       - id: eng_test1
         zone: eng_eastus01
         priority: 1
-        enabled: true
+        enabled: false
         workspace: eng_test1
         tfvars_file: config/engineering/eng_test1.tfvars
+        vendor: aro
+      - id: eng_test2
+        zone: eng_eastus02
+        priority: 1
+        enabled: true
+        workspace: eng_test2
+        tfvars_file: config/engineering/eng_test2.tfvars
+        vendor: aro
+      - id: eng_test2
+        zone: eng_eastus03
+        priority: 3
+        enabled: true
+        workspace: eng_test3
+        tfvars_file: config/engineering/eng_test3.tfvars
         vendor: aro
   - name: platform_management
     priority: 3
@@ -70,7 +70,7 @@ environments:
         vendor: aro
   - name: customer
     priority: 4
-    enabled: true
+    enabled: false
     clusters:
       - id: cust_test1
         zone: cust_eastus01
