@@ -1,7 +1,7 @@
 environments:
   - name: sut
     priority: 1
-    enabled: true
+    enabled: false
     clusters:
       - id: sut_test1
         zone: sut_test1
@@ -12,7 +12,7 @@ environments:
         vendor: aro
   - name: internal_management
     priority: 1
-    enabled: true
+    enabled: false
     clusters:
       - id: intmgmt_test1
         zone: intmgmt_test1
