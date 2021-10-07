@@ -134,7 +134,7 @@ jobs:
             ID_ARR=()
             RUN_ARR=()
             # Submitting workflow runs for each cluster
-            for CLUSTERID in $(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.priority == "'${PRIORITY}'")] as $clusters | $clusters[].id' -)
+            for CLUSTERID in $(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.priority == "'${PRIORITY}'" and .enabled == "true")] as $clusters | $clusters[].id' -)
             do
               ZONE=$(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.id == "'${CLUSTERID}'")] as $clusters | $clusters[].zone' -)
               WORKSPACE=$(cat ${PROMO_FILE} | yq  e '[[.environments[] | select(.name == "'${DEPLOYMENT_ENVIRONMENT}'")] as $env | $env[].clusters[] | select(.id == "'${CLUSTERID}'")] as $clusters | $clusters[].workspace' -)
