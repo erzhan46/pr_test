@@ -6,18 +6,21 @@ environments:
       - id: sut_test1
         zone: sut_test1
         priority: 1
+        enabled: true
         workspace: sut_test1
         tfvars_file: config/sut/sut_test1.tfvars
         vendor: aro
       - id: sut_test2
         zone: sut_test2
         priority: 1
+        enabled: true
         workspace: sut_test2
         tfvars_file: config/sut/sut_test2.tfvars
         vendor: aro
       - id: sut_test3
         zone: sut_test3
         priority: 2
+        enabled: true
         workspace: sut_test3
         tfvars_file: config/sut/sut_test3.tfvars
         vendor: aro
@@ -28,6 +31,7 @@ environments:
       - id: intmgmt_test1
         zone: intmgmt_test1
         priority: 1
+        enabled: true
         workspace: intmgmt_test1
         tfvars_file: config/internal_management/intmgmt_test1.tfvars
         vendor: aro
@@ -38,6 +42,7 @@ environments:
       - id: learn_test1
         zone: learn_test1
         priority: 1
+        enabled: true
         workspace: learn_test1
         tfvars_file: config/learning/learn_test1.tfvars
         vendor: aro
@@ -48,6 +53,7 @@ environments:
       - id: eng_test1
         zone: eng_eastus01
         priority: 1
+        enabled: true
         workspace: eng_test1
         tfvars_file: config/engineering/eng_test1.tfvars
         vendor: aro
@@ -58,6 +64,7 @@ environments:
       - id: platmgmt_test1
         zone: platmgmt_test1
         priority: 1
+        enabled: true
         workspace: platmgmt_test1
         tfvars_file: config/internal_management/platmgmt_test1.tfvars
         vendor: aro
@@ -68,6 +75,7 @@ environments:
       - id: cust_test1
         zone: cust_eastus01
         priority: 1
+        enabled: true
         workspace: cust_test1
         tfvars_file: config/customer/cust_test1.tfvars
         vendor: aro

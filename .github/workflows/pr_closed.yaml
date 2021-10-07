@@ -214,7 +214,9 @@ jobs:
             if [[ -z "${RELEASE_VERSION}" ]]; then
               RELEASE_VERSION="${{ steps.tag_config_changes.outputs.release_version }}"
             fi
-            for ENVIRONMENT in $(cat ${PROMO_FILE} | yq e '[.environments[] | select(.priority == "1")] as $env | $env[].name' -)
+            PRIORITY=$(cat ${PROMO_FILE} | yq e '[.environments[] | select(.enabled == "true")] as $env | $env[].priority' - | sort -un | head -1)
+            echo "Promoting to priority ${PRIORITY} environments (enabled)"
+            for ENVIRONMENT in $(cat ${PROMO_FILE} | yq e '[.environments[] | select(.priority == "'${PRIORITY}'" and .enabled == "true")] as $env | $env[].name' -)
             do
               echo "Deployment start in the ${ENVIRONMENT} environment"
               git tag -a "${RELEASE_VERSION}-${ENVIRONMENT}-start" -m "Deployment start in the ${ENVIRONMENT} environment" ${{ github.sha }}
