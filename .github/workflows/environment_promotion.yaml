@@ -109,6 +109,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.identify_environment.outputs.release_tag }}
       CODE_TAG: ${{ needs.identify_environment.outputs.code_tag }}
       CONFIG_TAG: ${{ needs.identify_environment.outputs.config_tag }}
+      PROMO_FILE: "promotion.yaml"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -144,15 +145,27 @@ jobs:
             echo "Promoting to priority ${PRIORITY} environments (enabled)"
             for ENVIRONMENT in $(cat ${PROMO_FILE} | yq e '[.environments[] | select(.priority == "'${PRIORITY}'" and .enabled == "true")] as $env | $env[].name' -)
             do
-              echo "Deployment start in the ${ENVIRONMENT} environment"
-              git tag -a "${RELEASE_VERSION}-${ENVIRONMENT}-start" -m "Deployment start in the ${ENVIRONMENT} environment" ${{ github.sha }}
-              git push origin "${RELEASE_VERSION}-${ENVIRONMENT}-start"
+              TAG="${RELEASE_VERSION}-${ENVIRONMENT}-start"
+              CHECK=$(git describe --tags --match="${TAG}*" --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
+              if [[ -z "${CHECK}" ]]; then
+                echo "Deployment start in the ${ENVIRONMENT} environment"
+                git tag -a "${RELEASE_VERSION}-${ENVIRONMENT}-start" -m "Deployment start in the ${ENVIRONMENT} environment" ${{ github.sha }}
+                git push origin "${RELEASE_VERSION}-${ENVIRONMENT}-start"
+              else
+                echo "Deployment start for ${ENVIRONMENT} environment already submitted"
+              fi
             done
           else
-            git tag -a "${RELEASE_VERSION}-success" -m "Deployment ${RELEASE_VERSION} is successful" ${{ github.sha }}
-            git push origin "${RELEASE_VERSION}-success"
-            echo "Release deployment successful"
-            exit 0
+            TAG="${RELEASE_VERSION}-success"
+            CHECK=$(git describe --tags --match="${TAG}*" --exact-match  ${{ github.sha }} 2>/dev/null || echo "")
+            if [[ -z "${CHECK}" ]]; then
+              git tag -a "${RELEASE_VERSION}-success" -m "Deployment ${RELEASE_VERSION} is successful" ${{ github.sha }}
+              git push origin "${RELEASE_VERSION}-success"
+              echo "Release deployment successful"
+              exit 0
+            else
+              echo "Deployment success already reported"
+            fi
           fi
 
 
