@@ -70,12 +70,12 @@ environments:
         vendor: aro
   - name: customer
     priority: 4
-    enabled: false
+    enabled: true
     clusters:
       - id: cust_test1
         zone: cust_eastus01
         priority: 1
-        enabled: true
+        enabled: false
         workspace: cust_test1
         tfvars_file: config/customer/cust_test1.tfvars
         vendor: aro
