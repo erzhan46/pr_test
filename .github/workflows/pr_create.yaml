@@ -128,9 +128,9 @@ jobs:
               echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
               exit 1
             fi
-            MAJOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major'} 
-            MINOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor'} 
-            PATCH=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch'} 
+            MAJOR=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major')
+            MINOR=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor')
+            PATCH=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch')
             CODE_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
             echo "Code version file presense check passed"
             echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
@@ -151,8 +151,8 @@ jobs:
                 exit 1
               fi
             else
-              LATEST_CODE_TAG="${{ steps.tags.output.latest_code_tag_overall }}"
-              CODE_VERSION="${{ steps.version_file.output.code_version }}"
+              LATEST_CODE_TAG="${{ steps.tags.outputs.latest_code_tag_overall }}"
+              CODE_VERSION="${{ steps.version_file.outputs.code_version }}"
               LATEST_CODE_TAG=${LATEST_CODE_TAG#v}
               CODE_VERSION=${CODE_VERSION#v}
               ARR_LATEST_CODE_TAG=(${LATEST_CODE_TAG//./ })
