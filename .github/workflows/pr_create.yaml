@@ -152,7 +152,9 @@ jobs:
               fi
             else
               LATEST_CODE_TAG="${{ steps.tags.output.latest_code_tag_overall }}"
+              echo ${LATEST_CODE_TAG}
               CODE_VERSION="${{ steps.version_file.output.code_version }}"
+              echo ${CODE_VERSION}
               LATEST_CODE_TAG=${LATEST_CODE_TAG#v}
               CODE_VERSION=${CODE_VERSION#v}
               ARR_LATEST_CODE_TAG=(${LATEST_CODE_TAG//./ })
