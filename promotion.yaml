@@ -1,7 +1,7 @@
 environments:
   - name: sut
     priority: 1
-    enabled: false
+    enabled: true
     clusters:
       - id: sut_test1
         zone: sut_test1
@@ -12,7 +12,7 @@ environments:
         vendor: aro
   - name: internal_management
     priority: 1
-    enabled: false
+    enabled: true
     clusters:
       - id: intmgmt_test1
         zone: intmgmt_test1
@@ -23,7 +23,7 @@ environments:
         vendor: aro
   - name: learning
     priority: 2
-    enabled: false
+    enabled: true
     clusters:
       - id: learn_test1
         zone: learn_test1
@@ -75,7 +75,7 @@ environments:
       - id: cust_test1
         zone: cust_eastus01
         priority: 1
-        enabled: false
+        enabled: true
         workspace: cust_test1
         tfvars_file: config/customer/cust_test1.tfvars
         vendor: aro
