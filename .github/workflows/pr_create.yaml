@@ -128,9 +128,9 @@ jobs:
               echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
               exit 1
             fi
-            MAJOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major'} 
-            MINOR=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor'} 
-            PATCH=${cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch'} 
+            MAJOR=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.major')
+            MINOR=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.minor')
+            PATCH=$(cat "${{ steps.files_scope.outputs.version_files }}" | jq '.patch')
             CODE_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
             echo "Code version file presense check passed"
             echo "Files changed: ${{ steps.files_scope.outputs.code_files }}"
